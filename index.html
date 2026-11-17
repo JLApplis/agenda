@@ -77,7 +77,9 @@ h1::first-letter { text-transform: uppercase; }
 .regle { display: grid; position: sticky; top: calc(var(--haut-entete, 134px) - 4px); z-index: 6; background: #F6F9FD; border-bottom: 1px solid var(--line); box-shadow: 0 -5px 0 var(--bg); }
 .regle .ech { position: relative; height: 22px; }
 .regle .ech span { position: absolute; top: 4px; font-size: 11px; font-weight: 600; color: var(--muted); transform: translateX(-50%); }
-.reg { display: grid; border-bottom: 1px solid var(--line); scroll-margin-top: calc(var(--haut-entete, 134px) + 22px); }
+.reg, .liste .mt { scroll-margin-top: var(--haut-liste, 160px); }
+.reg { display: grid; border-bottom: 1px solid var(--line); }
+.vide-mois { padding: 8px 14px; color: var(--muted); font-size: 14px; border-bottom: 1px solid var(--line); }
 .jd { padding: 6px 8px; font-weight: 700; font-size: 13px; line-height: 1.2; border-right: 1px solid var(--line); background: rgba(255,255,255,.45); }
 .jd small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
 .reg.auj .jd, .reg.auj .tl { background-color: var(--auj); }
@@ -326,7 +328,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "2.0";
+const VERSION = "2.1";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -555,6 +557,7 @@ function montrer(v) {
   if (v === "reglages") { $("titre").textContent = "Réglages"; rendreReglages(); }
   if (v === "sauvegarde") { $("titre").textContent = "Sauvegarde"; $("sauv-msg").textContent = ""; rendreSauvegarde(); }
   if (v === "mois") ALLER = "mois";
+  if (v === "liste") { const auj = new Date(); if (REF.getFullYear() === auj.getFullYear() && REF.getMonth() === auj.getMonth()) { REF = auj; ALLER = "jour"; } else ALLER = "mois"; }
   window.scrollTo(0, 0); rendre();
 }
 function rendreFiltres() {
@@ -572,11 +575,10 @@ $("prec").addEventListener("click", () => decaler(-1));
 $("suiv").addEventListener("click", () => decaler(1));
 $("auj").addEventListener("click", () => { REF = new Date(); ALLER = "jour"; rendre(); });
 function decaler(s) {
-  if (VUE === "mois") { REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1); ALLER = "mois"; }
-  else REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1);
+  REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1); ALLER = "mois";
   rendre();
 }
-$("rech").addEventListener("input", () => { if (VUE !== "liste" && $("rech").value.trim()) { VUE = "liste"; document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === "liste")); } rendre(); });
+$("rech").addEventListener("input", () => { if (!$("rech").value.trim()) ALLER = "mois"; if (VUE !== "liste" && $("rech").value.trim()) { VUE = "liste"; document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === "liste")); } rendre(); });
 $("fab").addEventListener("click", () => formulaire(null, { jour: ymd(new Date()) }));
 $("imprimer").addEventListener("click", () => {
   ouvrirTiroir(false); if (!["mois", "liste"].includes(VUE)) montrer("mois");
@@ -686,10 +688,20 @@ function majTitreMois() {
 }
 let attenteDefil = false;
 window.addEventListener("scroll", () => {
-  if (VUE !== "mois" || EN_RENDU || attenteDefil) return;
+  if (!["mois", "liste"].includes(VUE) || EN_RENDU || attenteDefil) return;
   attenteDefil = true;
   requestAnimationFrame(() => {
-    attenteDefil = false; if (VUE !== "mois" || !PLAGE) return;
+    attenteDefil = false;
+    if (VUE === "liste") {   // Liste : même défilement continu que le Mois (sauf pendant une recherche)
+      if (!PLAGE_L || norm($("rech").value)) return;
+      majTitreListe();
+      const bas = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+      const larg = () => (PLAGE_L.fin.getFullYear() - PLAGE_L.deb.getFullYear()) * 12 + PLAGE_L.fin.getMonth() - PLAGE_L.deb.getMonth();
+      if (bas < 1200) { PLAGE_L.fin = moisPlus(PLAGE_L.fin, 6); if (larg() > 25) PLAGE_L.deb = moisPlus(PLAGE_L.deb, 6); ALLER = null; vueListe(); }
+      else if (window.scrollY < 600 && PLAGE_L.deb > new Date(2000, 0, 1)) { PLAGE_L.deb = moisPlus(PLAGE_L.deb, -6); if (larg() > 25) PLAGE_L.fin = moisPlus(PLAGE_L.fin, -6); ALLER = null; vueListe(); }
+      return;
+    }
+    if (VUE !== "mois" || !PLAGE) return;
     majTitreMois();
     const bas = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
     const mois = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1), largeur = () => (PLAGE.fin.getFullYear() - PLAGE.deb.getFullYear()) * 12 + PLAGE.fin.getMonth() - PLAGE.deb.getMonth();
@@ -705,12 +717,21 @@ const PASTELS_MOIS = [["#DCE8F8", "#EEF4FC", "#123F78"], ["#E6DDF6", "#F4EFFB", 
 const H0 = 7, H1 = 22, LIGNE_PX = 24;
 let _ctx = null;
 function largeurTexte(t) { if (!_ctx) _ctx = document.createElement("canvas").getContext("2d"); _ctx.font = "600 11.5px Figtree, 'Segoe UI', system-ui, sans-serif"; return Math.ceil(_ctx.measureText(t).width); }
+let PLAGE_L = null;   // Liste en défilement continu : { deb, fin } (1er du premier mois, 1er du mois qui suit le dernier)
+const moisPlus = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+const hautListe = () => $("entete").offsetHeight + (document.querySelector(".regle") ? document.querySelector(".regle").offsetHeight : 0);
 function vueListe() {
   INST = {};
   const q = norm($("rech").value);
-  let de, a;
+  let de, a, ancre = null;
   if (q) { de = new Date(2000, 0, 1); a = AJ(new Date(), 3 * 366); $("titre").textContent = "Recherche"; }
-  else { de = new Date(REF.getFullYear(), REF.getMonth(), 1); a = new Date(REF.getFullYear(), REF.getMonth() + 3, 1); const dm = AJ(a, -1), court = (d) => MOIS_C[d.getMonth()]; $("titre").textContent = court(de) + (de.getFullYear() !== dm.getFullYear() ? " " + de.getFullYear() : "") + " – " + court(dm) + " " + dm.getFullYear(); }
+  else {
+    const refM = new Date(REF.getFullYear(), REF.getMonth(), 1);
+    if (!PLAGE_L || refM < PLAGE_L.deb || refM >= PLAGE_L.fin) { PLAGE_L = { deb: moisPlus(refM, -6), fin: moisPlus(refM, 13) }; if (!ALLER) ALLER = "mois"; }
+    de = PLAGE_L.deb; a = PLAGE_L.fin;
+    // ancre : l'élément visible en haut, pour garder la position après un nouvel affichage
+    if (!ALLER) { const hl = hautListe(), e = [...document.querySelectorAll(".liste .reg, .liste .mt")].find((x) => x.getBoundingClientRect().bottom > hl + 5); if (e) ancre = { sel: e.dataset.j ? '.reg[data-j="' + e.dataset.j + '"]' : '.mt[data-mois="' + e.dataset.mois + '"]', y: e.getBoundingClientRect().top }; }
+  }
   const l = instances(de, a, q ? (ev) => norm(ev.t + " " + (ev.l || "") + " " + (ev.d || "")).includes(q) : null).sort((x, y) => (x.d - y.d) || (y.ev.a - x.ev.a));
   const maint = new Date(), aujS = ymd(maint), petit = window.innerWidth < 640;
   const colJour = petit ? 52 : 86;
@@ -748,14 +769,21 @@ function vueListe() {
   for (let hh = H0; hh <= H1; hh += petit ? 3 : 1) { const s = document.createElement("span"); s.textContent = hh + (petit ? "h" : ""); s.style.left = xH(hh) + "px"; if (hh === H0) s.style.transform = "none"; if (hh === H1) s.style.transform = "translateX(-100%)"; ech.appendChild(s); }
   regle.append(document.createElement("div"), ech); z.appendChild(regle);
   const jours = Object.keys(parJour).sort();
-  if (!jours.length) { const v = document.createElement("div"); v.className = "vide"; v.textContent = q ? "Aucun événement trouvé." : "Aucun événement sur cette période."; z.appendChild(v); }
+  if (q && !jours.length) { const v = document.createElement("div"); v.className = "vide"; v.textContent = "Aucun événement trouvé."; z.appendChild(v); }
   let mc = "", bloc = z, premier = null;
+  const bandeMois = (k) => {   // bande avec le nom du mois, puis tout le mois sur son fond pastel
+    const [bande, fond, texte] = PASTELS_MOIS[+k.slice(5, 7) - 1];
+    const m = document.createElement("div"); m.className = "mt"; m.dataset.mois = k; m.textContent = MOIS[+k.slice(5, 7) - 1] + " " + k.slice(0, 4);
+    m.style.background = bande; m.style.color = texte; z.appendChild(m);
+    bloc = document.createElement("div"); bloc.className = "bloc-mois"; bloc.style.background = fond; z.appendChild(bloc);
+  };
+  const tousMois = [];
+  if (!q) for (let m = de; m < a; m = moisPlus(m, 1)) tousMois.push(cleMois(m));
+  const videsAvant = (k) => { while (tousMois.length && tousMois[0] < k) { const v = tousMois.shift(); bandeMois(v); const p = document.createElement("div"); p.className = "vide-mois"; p.textContent = "Aucun événement"; bloc.appendChild(p); } };
   jours.forEach((j) => {
-    if (j.slice(0, 7) !== mc) {   // nouveau mois : bande avec son nom, puis tout le mois sur son fond pastel
-      mc = j.slice(0, 7); const [bande, fond, texte] = PASTELS_MOIS[+mc.slice(5, 7) - 1];
-      const m = document.createElement("div"); m.className = "mt"; m.textContent = MOIS[+mc.slice(5, 7) - 1] + " " + mc.slice(0, 4);
-      m.style.background = bande; m.style.color = texte; z.appendChild(m);
-      bloc = document.createElement("div"); bloc.className = "bloc-mois"; bloc.style.background = fond; z.appendChild(bloc);
+    if (j.slice(0, 7) !== mc) {
+      mc = j.slice(0, 7); videsAvant(mc); if (tousMois[0] === mc) tousMois.shift();
+      bandeMois(mc);
     }
     const d = parseLoc(j), items = parJour[j];
     const reg = document.createElement("div"); reg.className = "reg" + (j === aujS ? " auj" : ""); reg.style.gridTemplateColumns = colJour + "px 1fr";
@@ -804,13 +832,31 @@ function vueListe() {
     zt.style.height = (nbL ? nbL * LIGNE_PX + 6 : (ja.length ? 6 : 26)) + "px";
     tl.appendChild(zt);
     if (j === aujS && hDe(maint) >= H0 && hDe(maint) <= H1) { const m = document.createElement("div"); m.className = "tl-maint"; m.style.left = xH(hDe(maint)) + "px"; tl.appendChild(m); }
-    reg.append(jd, tl); bloc.appendChild(reg);
-    if (!premier && j >= aujS) premier = reg;
+    reg.dataset.j = j; reg.append(jd, tl); bloc.appendChild(reg);
+    if (!premier && j >= (q ? aujS : ymd(REF))) premier = reg;
   });
+  videsAvant("9999-99");
+  EN_RENDU = true;
   $("zone").replaceChildren(z);
   document.documentElement.style.setProperty("--haut-entete", ($("entete").offsetHeight + 4) + "px");
+  document.documentElement.style.setProperty("--haut-liste", (hautListe() + 4) + "px");
   document.documentElement.style.setProperty("--pas-heure", (W / (H1 - H0)) + "px");
-  if (premier && (q || (REF.getFullYear() === maint.getFullYear() && REF.getMonth() === maint.getMonth()))) premier.scrollIntoView({ block: "start" });
+  if (q) { if (premier) premier.scrollIntoView({ block: "start" }); }
+  else if (ALLER === "jour" && premier && premier.dataset.j.slice(0, 7) === cleMois(REF)) premier.scrollIntoView({ block: "start" });
+  else if (ALLER === "jour" || ALLER === "mois") { const m = z.querySelector('.mt[data-mois="' + cleMois(REF) + '"]'); if (m) m.scrollIntoView({ block: "start" }); }
+  else if (ancre) { const e = z.querySelector(ancre.sel); if (e) window.scrollBy(0, e.getBoundingClientRect().top - ancre.y); }
+  ALLER = null;
+  if (!q) majTitreListe();
+  requestAnimationFrame(() => { EN_RENDU = false; });
+}
+// titre et mois de référence : la dernière bande de mois arrivée en haut de l'écran
+function majTitreListe() {
+  const hl = hautListe(), bandes = [...document.querySelectorAll(".liste .mt")];
+  if (!bandes.length) return;
+  const passees = bandes.filter((m) => m.getBoundingClientRect().top <= hl + 40);
+  const k = (passees.length ? passees[passees.length - 1] : bandes[0]).dataset.mois;
+  $("titre").textContent = MOIS[+k.slice(5, 7) - 1] + " " + k.slice(0, 4); $("titre-impr").textContent = $("titre").textContent;
+  REF = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1);
 }
 // la largeur des heures dépend de l'écran : on redessine quand la fenêtre change de taille
 let minuteurTaille = null;
