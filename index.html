@@ -44,7 +44,6 @@ h1::first-letter { text-transform: uppercase; }
 .entete { position: sticky; top: 0; z-index: 12; background: var(--bg); padding-top: 10px; }
 .entete header { margin-top: 0; }
 .entete .barre { margin-bottom: 0; padding-bottom: 8px; }
-.liste .jt { scroll-margin-top: var(--haut-entete, 130px); }
 /* barre des vues */
 .barre { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
 .onglets { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
@@ -72,17 +71,26 @@ h1::first-letter { text-transform: uppercase; }
 .ev:hover { filter: brightness(.94); }
 .plus { font-size: 11px; color: var(--muted); padding-left: 3px; }
 /* liste */
-.liste { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.liste .jt { padding: 8px 14px; font-weight: 700; background: rgba(255,255,255,.55); border-bottom: 1px solid var(--line); }
-.liste .mt { padding: 10px 14px; font: 600 17px var(--display); border-bottom: 1px solid var(--line); }
+.liste { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.liste .mt { padding: 9px 14px; font: 600 17px var(--display); border-bottom: 1px solid var(--line); }
 .liste .mt::first-letter { text-transform: uppercase; }
-.liste .jt.auj { background: var(--auj); }
-.ligne { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); cursor: pointer; align-items: start; }
-.ligne:hover { background: var(--bleu-soft); }
-.ligne.passe { opacity: .55; }
-.ligne .etiq { display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 600; max-width: 100%; overflow-wrap: anywhere; }
-.ligne .lieu { margin-top: 3px; }
-.ligne .lieu { color: var(--muted); font-size: 13px; }
+.regle { display: grid; position: sticky; top: calc(var(--haut-entete, 134px) - 4px); z-index: 6; background: #F6F9FD; border-bottom: 1px solid var(--line); box-shadow: 0 -5px 0 var(--bg); }
+.regle .ech { position: relative; height: 22px; }
+.regle .ech span { position: absolute; top: 4px; font-size: 11px; font-weight: 600; color: var(--muted); transform: translateX(-50%); }
+.reg { display: grid; border-bottom: 1px solid var(--line); scroll-margin-top: calc(var(--haut-entete, 134px) + 22px); }
+.jd { padding: 6px 8px; font-weight: 700; font-size: 13px; line-height: 1.2; border-right: 1px solid var(--line); background: rgba(255,255,255,.45); }
+.jd small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
+.reg.auj .jd, .reg.auj .tl { background-color: var(--auj); }
+.tl { position: relative; min-width: 0; background-image: repeating-linear-gradient(to right, rgba(31,39,51,.13) 0 1px, transparent 1px var(--pas-heure, 40px)); }
+.tl-jour { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 4px 0; position: relative; z-index: 1; }
+.tl-etiq, .tl-barre, .tl-lib { cursor: pointer; font: 600 11.5px/18px var(--font); }
+.tl-etiq { border-radius: 5px; padding: 0 6px; overflow-wrap: anywhere; }
+.tl-heures { position: relative; }
+.tl-barre { position: absolute; height: 18px; border-radius: 5px; padding: 0 5px; white-space: nowrap; overflow: hidden; }
+.tl-lib { position: absolute; white-space: nowrap; }
+.tl-lib.multi { white-space: normal; overflow-wrap: anywhere; }
+.tl-barre:hover, .tl-etiq:hover, .tl-lib:hover { filter: brightness(.93); text-decoration: underline; }
+.tl-maint { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--tomato); z-index: 2; pointer-events: none; }
 .liste-nav { display: flex; justify-content: center; gap: 10px; padding: 10px; }
 .vide { padding: 22px; text-align: center; color: var(--muted); }
 .lien { background: none; border: none; color: var(--bleu); font: 600 14px var(--font); cursor: pointer; padding: 6px 0; }
@@ -197,7 +205,6 @@ h1::first-letter { text-transform: uppercase; }
   .etat { display: none; }
   .case { min-height: 72px; padding: 2px 1px; }
   .ev { font-size: 10.5px; padding: 0 2px; }
-  .ligne { grid-template-columns: 82px 1fr; padding: 8px 10px; }
   .onglets button { padding: 7px 9px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -208,7 +215,7 @@ h1::first-letter { text-transform: uppercase; }
   .cadre-mois, .liste { border-radius: 0; }
   .pas-impr { display: none !important; }
   .mois-jn { position: static; }
-  .ev, .ligne .etiq, .liste .mt, .bloc-mois, .mt-mois, .case { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ev, .liste .mt, .bloc-mois, .mt-mois, .case, .tl-etiq, .tl-barre, .regle, .reg.auj .jd, .reg.auj .tl { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .case { min-height: 90px; }
 }
 </style>
@@ -319,7 +326,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.9";
+const VERSION = "2.0";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -694,6 +701,10 @@ window.addEventListener("scroll", () => {
 const PASTELS_MOIS = [["#DCE8F8", "#EEF4FC", "#123F78"], ["#E6DDF6", "#F4EFFB", "#3E2A78"], ["#D8EFDF", "#EDF8F0", "#1F5C39"], ["#F8DDE6", "#FCEEF3", "#7A2443"],
   ["#E3F0CF", "#F2F8E8", "#3A5A12"], ["#F6E9C4", "#FCF6E6", "#6B4E08"], ["#D3EEF0", "#EAF7F8", "#0E5157"], ["#F6E3C6", "#FCF4E8", "#6B4210"],
   ["#E9E1D6", "#F6F2EC", "#5A4630"], ["#F6DCCF", "#FCEFE8", "#7A3315"], ["#DDE3EA", "#EFF2F6", "#2F3E50"], ["#F3D9D9", "#FBEDED", "#7A1F1F"]];
+/* ---------- vue Liste : une ligne horaire par jour (7 h – 22 h), un trait fin par heure ---------- */
+const H0 = 7, H1 = 22, LIGNE_PX = 24;
+let _ctx = null;
+function largeurTexte(t) { if (!_ctx) _ctx = document.createElement("canvas").getContext("2d"); _ctx.font = "600 11.5px Figtree, 'Segoe UI', system-ui, sans-serif"; return Math.ceil(_ctx.measureText(t).width); }
 function vueListe() {
   INST = {};
   const q = norm($("rech").value);
@@ -701,61 +712,110 @@ function vueListe() {
   if (q) { de = new Date(2000, 0, 1); a = AJ(new Date(), 3 * 366); $("titre").textContent = "Recherche"; }
   else { de = new Date(REF.getFullYear(), REF.getMonth(), 1); a = new Date(REF.getFullYear(), REF.getMonth() + 3, 1); const dm = AJ(a, -1), court = (d) => MOIS_C[d.getMonth()]; $("titre").textContent = court(de) + (de.getFullYear() !== dm.getFullYear() ? " " + de.getFullYear() : "") + " – " + court(dm) + " " + dm.getFullYear(); }
   const l = instances(de, a, q ? (ev) => norm(ev.t + " " + (ev.l || "") + " " + (ev.d || "")).includes(q) : null).sort((x, y) => (x.d - y.d) || (y.ev.a - x.ev.a));
-  const z = document.createElement("div"); z.className = "liste";
-  const maint = new Date(), aujS = ymd(maint);
-  let jc = "", premier = null;
-  if (!l.length) { const v = document.createElement("div"); v.className = "vide"; v.textContent = q ? "Aucun événement trouvé." : "Aucun événement sur cette période."; z.appendChild(v); }
-  // une ligne par jour couvert : un événement sur plusieurs jours apparaît chaque jour (comme dans la vue Mois)
+  const maint = new Date(), aujS = ymd(maint), petit = window.innerWidth < 640;
+  const colJour = petit ? 52 : 86;
+  const W = Math.max(150, $("zone").clientWidth - 2 - colJour);   // largeur de la ligne horaire en pixels
+  const xH = (hh) => (Math.min(H1, Math.max(H0, hh)) - H0) / (H1 - H0) * W;
+  const hDe = (d) => d.getHours() + d.getMinutes() / 60;
   const jj = (d) => p2(d.getDate()) + "/" + p2(d.getMonth() + 1);
-  const lignes = [];
+  // éléments par jour : journées entières (étiquettes) et événements avec heure (barres)
+  const parJour = {};
+  const ajout = (j, o) => { (parJour[j] = parJour[j] || []).push(o); };
   l.forEach((x) => {
     const j0 = jourDe(x.d), dernier = x.ev.a ? AJ(x.f, -1) : (+x.f === +jourDe(x.f) ? AJ(x.f, -1) : jourDe(x.f));
-    const n = Math.max(1, nbJours(j0, dernier) + 1);
+    const n = Math.max(1, nbJours(j0, dernier) + 1), rec = x.ev.rr || x.ev.serie ? " 🔁" : "";
+    if (x.ev.a) {
+      if (q || n === 1) { ajout(x.s.slice(0, 10), { x, a: true, lib: x.ev.t + (n > 1 ? " (jusqu'au " + jj(dernier) + ")" : "") + rec, fin: x.f }); return; }
+      for (let k = 0; k < n; k++) { const d = AJ(j0, k); if (d >= jourDe(de) && d < a) ajout(ymd(d), { x, a: true, lib: x.ev.t + " (" + (k + 1) + "/" + n + ")" + rec, fin: x.f }); }
+      return;
+    }
     if (q || n === 1) {
-      const lib = x.ev.a ? (n > 1 ? "Jusqu'au " + jj(dernier) : "Journée") : (n > 1 ? x.s.slice(11) + " → " + jj(dernier) + " " + x.e.slice(11) : x.s.slice(11) + " – " + x.e.slice(11));
-      lignes.push({ x, j: x.s.slice(0, 10), lib, rang: x.ev.a ? 0 : 1, fin: x.f });
+      const lib = n > 1 ? x.s.slice(11) + " → " + jj(dernier) + " " + x.e.slice(11) + " " + x.ev.t : x.s.slice(11) + " " + x.ev.t;
+      ajout(x.s.slice(0, 10), { x, a: false, h1: hDe(x.d), h2: n > 1 ? 24 : (hDe(x.f) || 24), lib: lib + rec, fin: x.f });
       return;
     }
     for (let k = 0; k < n; k++) {
       const d = AJ(j0, k); if (d < jourDe(de) || d >= a) continue;
-      let lib, rang = 0;
-      if (x.ev.a) lib = "Journée (" + (k + 1) + "/" + n + ")";
-      else if (k === 0) { lib = x.s.slice(11) + " →"; rang = 1; }
-      else if (k === n - 1) lib = +x.f === +AJ(dernier, 1) ? "→ minuit" : "→ " + x.e.slice(11);
-      else lib = "Journée";
-      lignes.push({ x, j: ymd(d), lib, rang, fin: x.f < AJ(d, 1) ? x.f : AJ(d, 1) });
+      const h1 = k === 0 ? hDe(x.d) : 0, h2 = k === n - 1 ? (hDe(x.f) || 24) : 24;
+      const lib = k === 0 ? x.s.slice(11) + " " + x.ev.t + " →" : k === n - 1 ? "→ " + (+x.f === +AJ(dernier, 1) ? "minuit" : x.e.slice(11)) + " " + x.ev.t : x.ev.t;
+      ajout(ymd(d), { x, a: false, h1, h2, lib: lib + rec, fin: x.f < AJ(d, 1) ? x.f : AJ(d, 1) });
     }
   });
-  lignes.sort((p, r) => p.j.localeCompare(r.j) || (p.rang - r.rang) || (p.x.d - r.x.d));
-  let mc = "", bloc = z;
-  lignes.forEach(({ x, j, lib, fin }) => {
+  const z = document.createElement("div"); z.className = "liste";
+  // règle des heures, fixe en haut
+  const regle = document.createElement("div"); regle.className = "regle"; regle.style.gridTemplateColumns = colJour + "px 1fr";
+  const ech = document.createElement("div"); ech.className = "ech";
+  for (let hh = H0; hh <= H1; hh += petit ? 3 : 1) { const s = document.createElement("span"); s.textContent = hh + (petit ? "h" : ""); s.style.left = xH(hh) + "px"; if (hh === H0) s.style.transform = "none"; if (hh === H1) s.style.transform = "translateX(-100%)"; ech.appendChild(s); }
+  regle.append(document.createElement("div"), ech); z.appendChild(regle);
+  const jours = Object.keys(parJour).sort();
+  if (!jours.length) { const v = document.createElement("div"); v.className = "vide"; v.textContent = q ? "Aucun événement trouvé." : "Aucun événement sur cette période."; z.appendChild(v); }
+  let mc = "", bloc = z, premier = null;
+  jours.forEach((j) => {
     if (j.slice(0, 7) !== mc) {   // nouveau mois : bande avec son nom, puis tout le mois sur son fond pastel
       mc = j.slice(0, 7); const [bande, fond, texte] = PASTELS_MOIS[+mc.slice(5, 7) - 1];
       const m = document.createElement("div"); m.className = "mt"; m.textContent = MOIS[+mc.slice(5, 7) - 1] + " " + mc.slice(0, 4);
       m.style.background = bande; m.style.color = texte; z.appendChild(m);
       bloc = document.createElement("div"); bloc.className = "bloc-mois"; bloc.style.background = fond; z.appendChild(bloc);
     }
-    if (j !== jc) {
-      jc = j; const t = document.createElement("div"); t.className = "jt" + (j === aujS ? " auj" : ""); t.textContent = dateLongue(parseLoc(j)) + (j === aujS ? " — aujourd'hui" : "");
-      if (!premier && j >= aujS) { premier = t; }
-      bloc.appendChild(t);
+    const d = parseLoc(j), items = parJour[j];
+    const reg = document.createElement("div"); reg.className = "reg" + (j === aujS ? " auj" : ""); reg.style.gridTemplateColumns = colJour + "px 1fr";
+    const jd = document.createElement("div"); jd.className = "jd";
+    jd.append(JOURS[jsem(d)] + " " + d.getDate()); if (q) { const sm = document.createElement("small"); sm.textContent = MOIS_C[d.getMonth()] + " " + d.getFullYear(); jd.appendChild(sm); }
+    else if (j === aujS) { const sm = document.createElement("small"); sm.textContent = "aujourd'hui"; jd.appendChild(sm); }
+    const tl = document.createElement("div"); tl.className = "tl";
+    // journées entières : étiquettes au-dessus
+    const ja = items.filter((o) => o.a);
+    if (ja.length) {
+      const zj = document.createElement("div"); zj.className = "tl-jour";
+      ja.forEach((o) => { const coul = couleurDe(o.x.ev), pastel = o.fin <= maint;
+        const s = document.createElement("span"); s.className = "tl-etiq"; s.dataset.i = idInst(o.x); s.textContent = o.lib;
+        s.style.background = pastel ? melange(coul, 0.62) : coul; s.style.color = pastel ? melange(coul, -0.55) : texteSur(coul); zj.appendChild(s); });
+      tl.appendChild(zj);
     }
-    const li = document.createElement("div"); li.className = "ligne" + (fin <= maint ? " passe" : ""); li.dataset.i = idInst(x);
-    const h = document.createElement("div");
-    h.textContent = lib;
-    const c = document.createElement("div");
-    // titre dans une étiquette de la couleur de l'événement
-    const coul = couleurDe(x.ev);
-    const b = document.createElement("b"); b.className = "etiq"; b.textContent = x.ev.t; b.style.background = coul; b.style.color = texteSur(coul);
-    c.append(b);
-    if (x.ev.rr || x.ev.serie) c.append(" 🔁");
-    if (x.ev.l) { const lc = document.createElement("div"); lc.className = "lieu"; lc.textContent = "📍 " + x.ev.l; c.appendChild(lc); }
-    li.append(h, c); bloc.appendChild(li);
+    // événements avec heure : barres placées sur les heures, titre dedans s'il tient, sinon derrière ou devant (jamais coupé)
+    const occ = [];   // occupation des lignes : occ[ligne] = [[x1, x2], ...]
+    const libre = (k, x1, x2) => !(occ[k] || []).some(([p, r]) => x1 < r + 6 && x2 > p - 6);
+    const prendre = (k, x1, x2) => { (occ[k] = occ[k] || []).push([x1, x2]); };
+    const zt = document.createElement("div"); zt.className = "tl-heures";
+    let nbL = 0;
+    items.filter((o) => !o.a).sort((p, r) => p.h1 - r.h1).forEach((o) => {
+      const coul = couleurDe(o.x.ev), pastel = o.fin <= maint, fond = pastel ? melange(coul, 0.62) : coul, txt = pastel ? melange(coul, -0.55) : texteSur(coul), sombre = melange(coul, -0.55);
+      let b1 = xH(o.h1), b2 = xH(o.h2); if (b2 - b1 < 5) { if (b1 > W - 5) b1 = W - 5; b2 = b1 + 5; }
+      const tw = largeurTexte(o.lib) + 10;
+      let mode, lx, lignesTexte = 1;
+      if (tw <= b2 - b1) mode = "dedans";
+      else if (b2 + 4 + tw <= W) { mode = "derriere"; lx = b2 + 4; }
+      else if (b1 - 4 - tw >= 0) { mode = "devant"; lx = b1 - 4 - tw; }
+      else { mode = "dessous"; lx = Math.max(0, Math.min(b1, W - tw)); lignesTexte = Math.ceil(tw / W); }
+      const x1 = Math.min(b1, mode === "dedans" ? b1 : lx), x2 = Math.max(b2, mode === "dedans" ? b2 : (mode === "dessous" ? Math.min(W, lx + tw) : lx + tw));
+      const haut = mode === "dessous" ? 1 + lignesTexte : 1;
+      let k = 0; while (![...Array(haut).keys()].every((i) => libre(k + i, x1, x2))) k++;
+      for (let i = 0; i < haut; i++) prendre(k + i, x1, x2);
+      nbL = Math.max(nbL, k + haut);
+      const bar = document.createElement("div"); bar.className = "tl-barre"; bar.dataset.i = idInst(o.x);
+      bar.style.left = b1 + "px"; bar.style.width = (b2 - b1) + "px"; bar.style.top = (k * LIGNE_PX + 3) + "px"; bar.style.background = fond; bar.title = o.lib;
+      if (mode === "dedans") { bar.textContent = o.lib; bar.style.color = txt; zt.appendChild(bar); return; }
+      zt.appendChild(bar);
+      const lab = document.createElement("div"); lab.className = "tl-lib" + (mode === "dessous" ? " multi" : ""); lab.dataset.i = idInst(o.x); lab.textContent = o.lib; lab.style.color = sombre;
+      lab.style.left = lx + "px"; lab.style.top = ((mode === "dessous" ? k + 1 : k) * LIGNE_PX + 3) + "px"; if (mode === "dessous") lab.style.width = Math.min(W - lx, tw) + "px";
+      if (pastel) lab.style.opacity = ".75";
+      zt.appendChild(lab);
+    });
+    zt.style.height = (nbL ? nbL * LIGNE_PX + 6 : (ja.length ? 6 : 26)) + "px";
+    tl.appendChild(zt);
+    if (j === aujS && hDe(maint) >= H0 && hDe(maint) <= H1) { const m = document.createElement("div"); m.className = "tl-maint"; m.style.left = xH(hDe(maint)) + "px"; tl.appendChild(m); }
+    reg.append(jd, tl); bloc.appendChild(reg);
+    if (!premier && j >= aujS) premier = reg;
   });
   $("zone").replaceChildren(z);
   document.documentElement.style.setProperty("--haut-entete", ($("entete").offsetHeight + 4) + "px");
+  document.documentElement.style.setProperty("--pas-heure", (W / (H1 - H0)) + "px");
   if (premier && (q || (REF.getFullYear() === maint.getFullYear() && REF.getMonth() === maint.getMonth()))) premier.scrollIntoView({ block: "start" });
 }
+// la largeur des heures dépend de l'écran : on redessine quand la fenêtre change de taille
+let minuteurTaille = null;
+window.addEventListener("resize", () => { clearTimeout(minuteurTaille); minuteurTaille = setTimeout(() => { if (VUE === "liste") rendre(); }, 200); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (VUE === "liste") rendre(); });
 const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 $("zone").addEventListener("click", (e) => {
   const t = e.target.closest("[data-i]"); if (t) { detail(INST[t.dataset.i]); return; }
