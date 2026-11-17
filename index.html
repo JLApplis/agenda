@@ -44,7 +44,7 @@ h1::first-letter { text-transform: uppercase; }
 .entete { position: sticky; top: 0; z-index: 12; background: var(--bg); padding-top: 10px; }
 .entete header { margin-top: 0; }
 .entete .barre { margin-bottom: 0; padding-bottom: 8px; }
-.liste .jt, .mois, .grille-sem { scroll-margin-top: var(--haut-entete, 130px); }
+.liste .jt, .grille-sem { scroll-margin-top: var(--haut-entete, 130px); }
 /* barre des vues */
 .barre { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
 .onglets { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
@@ -53,15 +53,15 @@ h1::first-letter { text-transform: uppercase; }
 .recherche { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font: inherit; color: var(--fg); }
 .recherche:focus { outline: none; border-color: var(--bleu); }
 /* mois */
-.cadre-mois { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.cadre-mois { background: var(--surface); border: 1px solid var(--line); border-radius: 0 0 14px 14px; }
+.mois-jn { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); position: sticky; top: calc(var(--haut-entete, 134px) - 4px); z-index: 6; background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: 0 -5px 0 var(--bg); }
+.mois-jn div { padding: 6px 2px; font-weight: 600; font-size: 12px; color: var(--muted); text-align: center; }
+.sem-ligne { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.sem-ligne .case:last-child { border-right: none; }
+.mt-mois, .sem-ligne { scroll-margin-top: var(--haut-mois, 160px); }
 .mt-mois { padding: 9px 14px; font: 600 17px var(--display); border-bottom: 1px solid var(--line); }
 .mt-mois::first-letter { text-transform: uppercase; }
-.mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface); }
-.mois .jn { padding: 6px 2px; font-weight: 600; font-size: 12px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); }
 .case { min-height: 104px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 3px; overflow: hidden; cursor: pointer; position: relative; }
-.case:nth-child(7n) { border-right: none; }
-.case.hors { color: #8E99A8; }
-.case.hors .num { font-weight: 600; }
 .case.auj { background: var(--auj); }
 .case .num { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; margin: 0 2px 3px; }
 .case.auj .num span:first-child { background: var(--bleu); color: #fff; border-radius: 10px; padding: 0 6px; }
@@ -220,6 +220,8 @@ h1::first-letter { text-transform: uppercase; }
   .titre-impr { display: block; font: 600 20px var(--display); margin: 0 0 8px; }
   .defile { max-height: none; overflow: visible; }
   .cadre-mois, .grille-sem, .liste { border-radius: 0; }
+  .pas-impr { display: none !important; }
+  .mois-jn { position: static; }
   .ev, .blk, .ligne .etiq, .liste .mt, .bloc-mois, .mt-mois, .case { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .case { min-height: 90px; }
 }
@@ -335,7 +337,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.7";
+const VERSION = "1.8";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -563,6 +565,7 @@ function montrer(v) {
   document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === v));
   if (v === "reglages") { $("titre").textContent = "Réglages"; rendreReglages(); }
   if (v === "sauvegarde") { $("titre").textContent = "Sauvegarde"; $("sauv-msg").textContent = ""; rendreSauvegarde(); }
+  if (v === "mois") ALLER = "mois";
   window.scrollTo(0, 0); rendre();
 }
 function rendreFiltres() {
@@ -578,15 +581,20 @@ function rendreFiltres() {
 }
 $("prec").addEventListener("click", () => decaler(-1));
 $("suiv").addEventListener("click", () => decaler(1));
-$("auj").addEventListener("click", () => { REF = new Date(); rendre(); defilerMaintenant(); });
+$("auj").addEventListener("click", () => { REF = new Date(); ALLER = "jour"; rendre(); defilerMaintenant(); });
 function decaler(s) {
-  if (VUE === "mois" || VUE === "liste") REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1);
+  if (VUE === "mois") { REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1); ALLER = "mois"; }
+  else if (VUE === "liste") REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1);
   else if (VUE === "semaine") REF = AJ(REF, 7 * s); else REF = AJ(REF, s);
   rendre();
 }
 $("rech").addEventListener("input", () => { if (VUE !== "liste" && $("rech").value.trim()) { VUE = "liste"; document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === "liste")); } rendre(); });
 $("fab").addEventListener("click", () => formulaire(null, { jour: VUE === "jour" || VUE === "semaine" ? (ymd(REF) === ymd(new Date()) || VUE === "jour" ? ymd(REF) : ymd(lundi(REF))) : ymd(new Date()) }));
-$("imprimer").addEventListener("click", () => { ouvrirTiroir(false); if (!["mois", "semaine", "jour", "liste"].includes(VUE)) montrer("mois"); setTimeout(() => window.print(), 100); });
+$("imprimer").addEventListener("click", () => {
+  ouvrirTiroir(false); if (!["mois", "semaine", "jour", "liste"].includes(VUE)) montrer("mois");
+  if (VUE === "mois") { const k = cleMois(REF); document.querySelectorAll(".sem-ligne, .mt-mois").forEach((e) => e.classList.toggle("pas-impr", !e.dataset.mois.split(" ").includes(k))); }   // en Mois, on n'imprime que le mois affiché
+  setTimeout(() => window.print(), 100);
+});
 $("aller-reprise").addEventListener("click", () => montrer("sauvegarde"));
 
 function rendre() {
@@ -610,36 +618,97 @@ function puce(x, jour, pastel) {
 }
 let INST = {};   // instances affichées, par clé
 const idInst = (x) => { const k = x.id + "|" + (x.occ || ""); INST[k] = x; return k; };
+/* ---------- vue Mois en défilement continu : les semaines à la suite, une bande au début de chaque mois ---------- */
+let PLAGE = null;          // { deb, fin } : 1er du premier mois affiché, 1er du mois qui suit le dernier
+let ALLER = "mois";        // après le prochain affichage : "mois" = aller au mois de REF, "jour" = aller à la semaine de REF, null = garder la position
+let EN_RENDU = false;
+const cleMois = (d) => d.getFullYear() + "-" + p2(d.getMonth() + 1);
+const hautEntete = () => $("entete").offsetHeight + ($("mois-jn") ? $("mois-jn").offsetHeight : 0);
 function vueMois() {
   INST = {};
-  const an = REF.getFullYear(), m = REF.getMonth();
-  $("titre").textContent = MOIS[m] + " " + an;
-  const deb = lundi(new Date(an, m, 1)), aujS = ymd(new Date());
-  const nbSem = Math.ceil((nbJours(deb, new Date(an, m + 1, 1))) / 7);
-  const l = instances(deb, AJ(deb, 7 * nbSem));
-  const g = document.createElement("div"); g.className = "mois";
-  JOURS.forEach((j) => { const d = document.createElement("div"); d.className = "jn"; d.textContent = j; g.appendChild(d); });
+  const refM = new Date(REF.getFullYear(), REF.getMonth(), 1);
+  if (!PLAGE || refM < PLAGE.deb || refM >= PLAGE.fin) { PLAGE = { deb: new Date(refM.getFullYear(), refM.getMonth() - 6, 1), fin: new Date(refM.getFullYear(), refM.getMonth() + 13, 1) }; if (!ALLER) ALLER = "mois"; }
+  // ancre : la semaine visible en haut, pour garder la position après un nouvel affichage
+  let ancre = null;
+  if (!ALLER) { const s = semaineEnHaut(); if (s) ancre = { j: s.dataset.lundi, y: s.getBoundingClientRect().top }; }
+  const deb = lundi(PLAGE.deb), fin = AJ(lundi(AJ(PLAGE.fin, -1)), 7), aujS = ymd(new Date()), maint = new Date();
+  // événements rangés par jour en une seule passe (rapide même sur deux ans)
+  const parJour = {};
+  instances(deb, fin).forEach((x) => {
+    const j0 = jourDe(x.d), dernier = x.ev.a ? AJ(x.f, -1) : (+x.f === +jourDe(x.f) && +x.f !== +x.d ? AJ(x.f, -1) : jourDe(x.f));
+    for (let d = j0 < deb ? deb : j0; d <= dernier && d < fin; d = AJ(d, 1)) (parJour[ymd(d)] = parJour[ymd(d)] || []).push(x);
+  });
+  const cadre = document.createElement("div"); cadre.className = "cadre-mois";
+  const jn = document.createElement("div"); jn.className = "mois-jn"; jn.id = "mois-jn";
+  JOURS.forEach((j) => { const d = document.createElement("div"); d.textContent = j; jn.appendChild(d); });
+  cadre.appendChild(jn);
   const max = window.innerWidth < 640 ? 3 : 4;
-  for (let i = 0; i < 7 * nbSem; i++) {
-    const d = AJ(deb, i), c = document.createElement("div");
-    c.className = "case" + (d.getMonth() !== m ? " hors" : "") + (ymd(d) === aujS ? " auj" : ""); c.dataset.j = ymd(d);
-    if (ymd(d) !== aujS) c.style.background = PASTELS_MOIS[d.getMonth()][1];   // fond pastel du mois de ce jour (comme dans la Liste)
-    const n = document.createElement("div"); n.className = "num";
-    const sp = document.createElement("span"); sp.textContent = d.getDate();
-    const pl = document.createElement("span"); pl.className = "ajout-jour"; pl.textContent = "+"; pl.dataset.nj = ymd(d); pl.title = "Ajouter un événement ce jour";
-    n.append(sp, pl); c.appendChild(n);
-    const ev = duJour(l, d);
-    const maint = new Date();
-    ev.slice(0, max).forEach((x) => c.appendChild(puce(x, d, x.f <= maint)));
-    if (ev.length > max) { const p = document.createElement("div"); p.className = "plus"; p.textContent = "+ " + (ev.length - max) + " autre" + (ev.length - max > 1 ? "s" : ""); c.appendChild(p); }
-    g.appendChild(c);
+  for (let s = deb; s < fin; s = AJ(s, 7)) {
+    const jours = [0, 1, 2, 3, 4, 5, 6].map((k) => AJ(s, k));
+    const premier = jours.find((d) => d.getDate() === 1 && d >= PLAGE.deb && d < PLAGE.fin);
+    if (premier) {   // bande du mois, avant la semaine où il commence
+      const [bande, , texte] = PASTELS_MOIS[premier.getMonth()];
+      const mt = document.createElement("div"); mt.className = "mt-mois"; mt.dataset.mois = cleMois(premier);
+      mt.textContent = MOIS[premier.getMonth()] + " " + premier.getFullYear(); mt.style.background = bande; mt.style.color = texte;
+      cadre.appendChild(mt);
+    }
+    const ligne = document.createElement("div"); ligne.className = "sem-ligne"; ligne.dataset.lundi = ymd(s);
+    ligne.dataset.mois = [...new Set(jours.map(cleMois))].join(" ");
+    jours.forEach((d) => {
+      const c = document.createElement("div");
+      c.className = "case" + (ymd(d) === aujS ? " auj" : ""); c.dataset.j = ymd(d);
+      if (ymd(d) !== aujS) c.style.background = PASTELS_MOIS[d.getMonth()][1];   // fond pastel du mois de ce jour
+      const n = document.createElement("div"); n.className = "num";
+      const sp = document.createElement("span"); sp.textContent = d.getDate() === 1 ? "1er " + MOIS_C[d.getMonth()] : d.getDate();
+      const pl = document.createElement("span"); pl.className = "ajout-jour"; pl.textContent = "+"; pl.dataset.nj = ymd(d); pl.title = "Ajouter un événement ce jour";
+      n.append(sp, pl); c.appendChild(n);
+      const ev = parJour[ymd(d)] || [];
+      ev.slice(0, max).forEach((x) => c.appendChild(puce(x, d, x.f <= maint)));
+      if (ev.length > max) { const p = document.createElement("div"); p.className = "plus"; p.textContent = "+ " + (ev.length - max) + " autre" + (ev.length - max > 1 ? "s" : ""); c.appendChild(p); }
+      ligne.appendChild(c);
+    });
+    cadre.appendChild(ligne);
   }
-  // bande avec le nom du mois, dans la teinte du mois (comme dans la Liste)
-  const [bande, , texte] = PASTELS_MOIS[m];
-  const mt = document.createElement("div"); mt.className = "mt-mois"; mt.textContent = MOIS[m] + " " + an; mt.style.background = bande; mt.style.color = texte;
-  const cadre = document.createElement("div"); cadre.className = "cadre-mois"; cadre.append(mt, g);
+  EN_RENDU = true;
   $("zone").replaceChildren(cadre);
+  document.documentElement.style.setProperty("--haut-entete", ($("entete").offsetHeight + 4) + "px");
+  document.documentElement.style.setProperty("--haut-mois", (hautEntete() + 4) + "px");
+  if (ALLER === "jour") { const s = cadre.querySelector('.sem-ligne[data-lundi="' + ymd(lundi(REF)) + '"]'); if (s) s.scrollIntoView({ block: "start" }); }
+  else if (ALLER === "mois") { const m = cadre.querySelector('.mt-mois[data-mois="' + cleMois(REF) + '"]'); if (m) m.scrollIntoView({ block: "start" }); }
+  else if (ancre) { const s = cadre.querySelector('.sem-ligne[data-lundi="' + ancre.j + '"]'); if (s) window.scrollBy(0, s.getBoundingClientRect().top - ancre.y); }
+  ALLER = null;
+  majTitreMois();
+  requestAnimationFrame(() => { EN_RENDU = false; });
 }
+// semaine affichée tout en haut, juste sous l'en-tête
+function semaineEnHaut() {
+  const haut = hautEntete();
+  return [...document.querySelectorAll(".sem-ligne")].find((s) => s.getBoundingClientRect().bottom > haut + 20) || null;
+}
+// titre et mois de référence : la dernière bande de mois arrivée en haut de l'écran
+// (sinon, tout en haut de la plage : le mois du jeudi de la première semaine)
+function majTitreMois() {
+  const haut = hautEntete();
+  const passees = [...document.querySelectorAll(".mt-mois")].filter((m) => m.getBoundingClientRect().top <= haut + 60);
+  let an, mo;
+  if (passees.length) { const k = passees[passees.length - 1].dataset.mois; an = +k.slice(0, 4); mo = +k.slice(5, 7) - 1; }
+  else { const s = semaineEnHaut(); if (!s) return; const jeudi = AJ(parseLoc(s.dataset.lundi), 3); an = jeudi.getFullYear(); mo = jeudi.getMonth(); }
+  $("titre").textContent = MOIS[mo] + " " + an; $("titre-impr").textContent = $("titre").textContent;
+  REF = new Date(an, mo, 1);
+}
+let attenteDefil = false;
+window.addEventListener("scroll", () => {
+  if (VUE !== "mois" || EN_RENDU || attenteDefil) return;
+  attenteDefil = true;
+  requestAnimationFrame(() => {
+    attenteDefil = false; if (VUE !== "mois" || !PLAGE) return;
+    majTitreMois();
+    const bas = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+    const mois = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1), largeur = () => (PLAGE.fin.getFullYear() - PLAGE.deb.getFullYear()) * 12 + PLAGE.fin.getMonth() - PLAGE.deb.getMonth();
+    if (bas < 1200) { PLAGE.fin = mois(PLAGE.fin, 6); if (largeur() > 25) PLAGE.deb = mois(PLAGE.deb, 6); ALLER = null; vueMois(); }
+    else if (window.scrollY < 600 && PLAGE.deb > new Date(2000, 0, 1)) { PLAGE.deb = mois(PLAGE.deb, -6); if (largeur() > 25) PLAGE.fin = mois(PLAGE.fin, -6); ALLER = null; vueMois(); }
+  });
+}, { passive: true });
 const H_PX = 44;
 function vueSemaine(n) {
   INST = {};
