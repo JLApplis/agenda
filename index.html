@@ -53,11 +53,15 @@ h1::first-letter { text-transform: uppercase; }
 .recherche { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font: inherit; color: var(--fg); }
 .recherche:focus { outline: none; border-color: var(--bleu); }
 /* mois */
-.mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.cadre-mois { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.mt-mois { padding: 9px 14px; font: 600 17px var(--display); border-bottom: 1px solid var(--line); }
+.mt-mois::first-letter { text-transform: uppercase; }
+.mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface); }
 .mois .jn { padding: 6px 2px; font-weight: 600; font-size: 12px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); }
 .case { min-height: 104px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 3px; overflow: hidden; cursor: pointer; position: relative; }
 .case:nth-child(7n) { border-right: none; }
-.case.hors { background: #F8FAFD; color: #A8B2C0; }
+.case.hors { color: #8E99A8; }
+.case.hors .num { font-weight: 600; }
 .case.auj { background: var(--auj); }
 .case .num { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; margin: 0 2px 3px; }
 .case.auj .num span:first-child { background: var(--bleu); color: #fff; border-radius: 10px; padding: 0 6px; }
@@ -215,8 +219,8 @@ h1::first-letter { text-transform: uppercase; }
   .entete, header, .barre, .fab, #tiroir, #voile, .toast, .liste-nav, .ajout-jour, .bandeau-info { display: none !important; }
   .titre-impr { display: block; font: 600 20px var(--display); margin: 0 0 8px; }
   .defile { max-height: none; overflow: visible; }
-  .mois, .grille-sem, .liste { border-radius: 0; }
-  .ev, .blk, .ligne .etiq, .liste .mt, .bloc-mois { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cadre-mois, .grille-sem, .liste { border-radius: 0; }
+  .ev, .blk, .ligne .etiq, .liste .mt, .bloc-mois, .mt-mois, .case { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .case { min-height: 90px; }
 }
 </style>
@@ -331,7 +335,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.6";
+const VERSION = "1.7";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -619,6 +623,7 @@ function vueMois() {
   for (let i = 0; i < 7 * nbSem; i++) {
     const d = AJ(deb, i), c = document.createElement("div");
     c.className = "case" + (d.getMonth() !== m ? " hors" : "") + (ymd(d) === aujS ? " auj" : ""); c.dataset.j = ymd(d);
+    if (ymd(d) !== aujS) c.style.background = PASTELS_MOIS[d.getMonth()][1];   // fond pastel du mois de ce jour (comme dans la Liste)
     const n = document.createElement("div"); n.className = "num";
     const sp = document.createElement("span"); sp.textContent = d.getDate();
     const pl = document.createElement("span"); pl.className = "ajout-jour"; pl.textContent = "+"; pl.dataset.nj = ymd(d); pl.title = "Ajouter un événement ce jour";
@@ -629,7 +634,11 @@ function vueMois() {
     if (ev.length > max) { const p = document.createElement("div"); p.className = "plus"; p.textContent = "+ " + (ev.length - max) + " autre" + (ev.length - max > 1 ? "s" : ""); c.appendChild(p); }
     g.appendChild(c);
   }
-  $("zone").replaceChildren(g);
+  // bande avec le nom du mois, dans la teinte du mois (comme dans la Liste)
+  const [bande, , texte] = PASTELS_MOIS[m];
+  const mt = document.createElement("div"); mt.className = "mt-mois"; mt.textContent = MOIS[m] + " " + an; mt.style.background = bande; mt.style.color = texte;
+  const cadre = document.createElement("div"); cadre.className = "cadre-mois"; cadre.append(mt, g);
+  $("zone").replaceChildren(cadre);
 }
 const H_PX = 44;
 function vueSemaine(n) {
