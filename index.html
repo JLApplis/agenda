@@ -92,6 +92,9 @@ h1::first-letter { text-transform: uppercase; }
 .tl-lib { position: absolute; white-space: nowrap; }
 .tl-lib.multi { white-space: normal; overflow-wrap: anywhere; }
 .tl-barre:hover, .tl-etiq:hover, .tl-lib:hover { filter: brightness(.93); text-decoration: underline; }
+.reg { cursor: copy; }
+.tl-indic { position: absolute; top: 2px; z-index: 3; pointer-events: none; font: 600 11px/16px var(--font); color: var(--bleu); background: var(--surface); border: 1px dashed var(--bleu); border-radius: 5px; padding: 0 4px; white-space: nowrap; }
+@media (hover: none) { .tl-indic { display: none !important; } }
 .tl-maint { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--tomato); z-index: 2; pointer-events: none; }
 .liste-nav { display: flex; justify-content: center; gap: 10px; padding: 10px; }
 .vide { padding: 22px; text-align: center; color: var(--muted); }
@@ -328,7 +331,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "2.1";
+const VERSION = "2.2";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -866,8 +869,29 @@ const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toL
 $("zone").addEventListener("click", (e) => {
   const t = e.target.closest("[data-i]"); if (t) { detail(INST[t.dataset.i]); return; }
   const nj = e.target.closest("[data-nj]"); if (nj) { formulaire(null, { jour: nj.dataset.nj }); return; }
-  const c = e.target.closest(".case"); if (c) ouvrirJour(c.dataset.j);
+  const c = e.target.closest(".case"); if (c) { ouvrirJour(c.dataset.j); return; }
+  // Liste : clic sur la ligne d'un jour = nouvel événement ce jour-là, à l'heure cliquée (date à gauche : 9 h)
+  const reg = e.target.closest(".reg");
+  if (reg && reg.dataset.j) { const hc = heureCliquee(e, reg); formulaire(null, { jour: reg.dataset.j, heure: hc || "09:00" }); }
 });
+// heure correspondant à la position de la souris sur la ligne horaire, arrondie à la demi-heure (null hors de la ligne)
+function heureCliquee(e, reg) {
+  const tl = reg.querySelector(".tl"); if (!tl || !tl.contains(e.target)) return null;
+  const r = tl.getBoundingClientRect(), x = Math.min(Math.max(e.clientX - r.left, 0), r.width - 1);
+  const hh = Math.min(H1 - 0.5, Math.floor((H0 + x / r.width * (H1 - H0)) * 2) / 2);
+  return p2(Math.floor(hh)) + ":" + (hh % 1 ? "30" : "00");
+}
+// PC : repère « + 14:30 » qui suit la souris sur la ligne horaire
+const indic = document.createElement("div"); indic.className = "tl-indic"; indic.hidden = true;
+$("zone").addEventListener("mousemove", (e) => {
+  const reg = e.target.closest(".reg"), surEv = e.target.closest("[data-i]");
+  const hc = reg && !surEv ? heureCliquee(e, reg) : null;
+  if (!hc) { indic.hidden = true; return; }
+  const tl = reg.querySelector(".tl"), r = tl.getBoundingClientRect(), [hh, mm] = hc.split(":").map(Number);
+  if (indic.parentNode !== tl) tl.appendChild(indic);
+  indic.textContent = "+ " + hc; indic.style.left = ((hh + mm / 60 - H0) / (H1 - H0) * r.width) + "px"; indic.hidden = false;
+});
+$("zone").addEventListener("mouseleave", () => { indic.hidden = true; });
 
 /* ---------- fenêtre ---------- */
 function ouvrirDlg(...enfants) { $("dlg").replaceChildren(...enfants.filter((c) => c != null)); $("voile-dlg").hidden = false; }
