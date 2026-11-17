@@ -40,6 +40,11 @@ h1::first-letter { text-transform: uppercase; }
 .etat { font-size: 12px; font-weight: 600; background: rgba(255,255,255,.18); padding: 4px 9px; border-radius: 12px; white-space: nowrap; max-width: 30vw; overflow: hidden; text-overflow: ellipsis; }
 .etat.alerte { background: var(--tomato); }
 .pastille { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--tomato); color: #fff; font: 700 11px/20px var(--font); box-shadow: 0 0 0 2px var(--bleu); }
+/* bandeau + barre des vues restent en haut : la page glisse dessous */
+.entete { position: sticky; top: 0; z-index: 12; background: var(--bg); padding-top: 10px; }
+.entete header { margin-top: 0; }
+.entete .barre { margin-bottom: 0; padding-bottom: 8px; }
+.liste .jt, .mois, .grille-sem { scroll-margin-top: var(--haut-entete, 130px); }
 /* barre des vues */
 .barre { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
 .onglets { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
@@ -205,7 +210,7 @@ h1::first-letter { text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 @media print {
   body { background: #fff; padding: 0; }
-  header, .barre, .fab, #tiroir, #voile, .toast, .liste-nav, .ajout-jour, .bandeau-info { display: none !important; }
+  .entete, header, .barre, .fab, #tiroir, #voile, .toast, .liste-nav, .ajout-jour, .bandeau-info { display: none !important; }
   .titre-impr { display: block; font: 600 20px var(--display); margin: 0 0 8px; }
   .defile { max-height: none; overflow: visible; }
   .mois, .grille-sem, .liste { border-radius: 0; }
@@ -252,6 +257,7 @@ h1::first-letter { text-transform: uppercase; }
 </nav>
 
 <div class="page">
+  <div class="entete" id="entete">
   <header>
     <button class="btn-menu" id="btn-menu" type="button" aria-label="Ouvrir le menu">☰</button>
     <button class="btn-menu" id="prec" type="button" aria-label="Période précédente">‹</button>
@@ -269,6 +275,7 @@ h1::first-letter { text-transform: uppercase; }
       <button type="button" data-vue="liste">Liste</button>
     </div>
     <input type="search" class="recherche" id="rech" placeholder="Rechercher…" aria-label="Rechercher un événement">
+  </div>
   </div>
   <div class="titre-impr" id="titre-impr"></div>
   <div class="bandeau-info" id="bandeau-vide" hidden>Ton agenda est vide. Pour reprendre tes données Google Agenda : menu ☰ ▸ <b>Sauvegarde</b> ▸ <b>Restaurer</b>, puis choisis le fichier « AGENDA_reprise_Google… ». <button class="lien" id="aller-reprise" type="button">Y aller</button></div>
@@ -322,7 +329,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.4";
+const VERSION = "1.5";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -695,7 +702,7 @@ function vueListe() {
       if (x.ev.a) lib = "Journée (" + (k + 1) + "/" + n + ")";
       else if (k === 0) { lib = x.s.slice(11) + " →"; rang = 1; }
       else if (k === n - 1) lib = +x.f === +AJ(dernier, 1) ? "→ minuit" : "→ " + x.e.slice(11);
-      else lib = "Toute la journée";
+      else lib = "Journée";
       lignes.push({ x, j: ymd(d), lib, rang, fin: x.f < AJ(d, 1) ? x.f : AJ(d, 1) });
     }
   });
@@ -719,6 +726,7 @@ function vueListe() {
     li.append(h, c); z.appendChild(li);
   });
   $("zone").replaceChildren(z);
+  document.documentElement.style.setProperty("--haut-entete", ($("entete").offsetHeight + 4) + "px");
   if (premier && (q || (REF.getFullYear() === maint.getFullYear() && REF.getMonth() === maint.getMonth()))) premier.scrollIntoView({ block: "start" });
 }
 const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
