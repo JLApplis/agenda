@@ -114,6 +114,11 @@ h1::first-letter { text-transform: uppercase; }
 .form input:focus, .form textarea:focus, .form select:focus { outline: none; border-color: var(--bleu); }
 .form textarea { min-height: 80px; resize: vertical; }
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+/* date et heure sur la même ligne que leur libellé, champs étroits */
+.date-ligne { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.date-ligne label { margin: 0 !important; width: 44px; flex: none; }
+.form .date-ligne input[type=date] { width: auto; flex: 0 1 11.5em; min-width: 0; }
+.form .date-ligne input[type=time] { width: auto; flex: 0 1 7.5em; min-width: 0; }
 .chk { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-weight: 600; }
 .chk input { width: 18px; height: 18px; }
 .jours-sem { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
@@ -316,7 +321,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.1";
+const VERSION = "1.2";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -861,8 +866,8 @@ function formulaire(x, opts) {
     el("div", { class: "form" },
       el("label", { for: "fT" }, "Titre *"), fT,
       el("label", { class: "chk" }, fA, "Journée entière"),
-      el("div", { class: "duo" }, el("div", null, el("label", { for: "fDS" }, "Début"), fDS), el("div", null, el("label", { for: "fHS" }, " "), fHS)),
-      el("div", { class: "duo" }, el("div", null, el("label", { for: "fDE" }, "Fin"), fDE), el("div", null, el("label", { for: "fHE" }, " "), fHE)),
+      el("div", { class: "date-ligne" }, el("label", { for: "fDS" }, "Début"), fDS, fHS),
+      el("div", { class: "date-ligne" }, el("label", { for: "fDE" }, "Fin"), fDE, fHE),
       el("label", { for: "fR" }, "Répétition"), fR, blocRR,
       el("label", null, "Couleur / catégorie : ", nomCat), palette,
       el("label", null, "Rappels"), rapBox, fRapAj,
