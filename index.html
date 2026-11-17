@@ -87,7 +87,9 @@ h1::first-letter { text-transform: uppercase; }
 .maintenant { position: absolute; left: 0; right: 0; height: 2px; background: var(--tomato); z-index: 3; pointer-events: none; }
 /* liste */
 .liste { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.liste .jt { padding: 8px 14px; font-weight: 700; background: #F6F9FD; border-bottom: 1px solid var(--line); }
+.liste .jt { padding: 8px 14px; font-weight: 700; background: rgba(255,255,255,.55); border-bottom: 1px solid var(--line); }
+.liste .mt { padding: 10px 14px; font: 600 17px var(--display); border-bottom: 1px solid var(--line); }
+.liste .mt::first-letter { text-transform: uppercase; }
 .liste .jt.auj { background: var(--auj); }
 .ligne { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); cursor: pointer; align-items: start; }
 .ligne:hover { background: var(--bleu-soft); }
@@ -214,7 +216,7 @@ h1::first-letter { text-transform: uppercase; }
   .titre-impr { display: block; font: 600 20px var(--display); margin: 0 0 8px; }
   .defile { max-height: none; overflow: visible; }
   .mois, .grille-sem, .liste { border-radius: 0; }
-  .ev, .blk, .ligne .etiq { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ev, .blk, .ligne .etiq, .liste .mt, .bloc-mois { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .case { min-height: 90px; }
 }
 </style>
@@ -329,7 +331,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.5";
+const VERSION = "1.6";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -588,10 +590,16 @@ function rendre() {
   if (VUE === "mois") vueMois(); else if (VUE === "liste") vueListe(); else vueSemaine(VUE === "jour" ? 1 : 7);
   $("titre-impr").textContent = $("titre").textContent;
 }
-function puce(x, jour) {
+// mélange une couleur avec du blanc (t > 0) ou du noir (t < 0)
+function melange(hex, t) {
+  const h = (hex || "#1A5FB4").replace("#", ""), cible = t > 0 ? 255 : 0, k = Math.abs(t);
+  return "#" + [0, 2, 4].map((i) => { const v = parseInt(h.slice(i, i + 2), 16); return p2(Math.round(v + (cible - v) * k).toString(16)); }).join("");
+}
+function puce(x, jour, pastel) {
   const s = document.createElement("span"); s.className = "ev" + (x.ev.a ? " jour" : ""); s.dataset.i = idInst(x);
   const c = couleurDe(x.ev);
-  s.style.background = c; s.style.color = texteSur(c);
+  if (pastel) { s.style.background = melange(c, 0.62); s.style.color = melange(c, -0.55); }   // événement terminé
+  else { s.style.background = c; s.style.color = texteSur(c); }
   const debutIci = x.s.slice(0, 10) === ymd(jour);
   s.textContent = (x.ev.a ? "" : (debutIci ? x.s.slice(11) + " " : "… ")) + x.ev.t;
   s.title = x.ev.t; return s;
@@ -616,7 +624,8 @@ function vueMois() {
     const pl = document.createElement("span"); pl.className = "ajout-jour"; pl.textContent = "+"; pl.dataset.nj = ymd(d); pl.title = "Ajouter un événement ce jour";
     n.append(sp, pl); c.appendChild(n);
     const ev = duJour(l, d);
-    ev.slice(0, max).forEach((x) => c.appendChild(puce(x, d)));
+    const maint = new Date();
+    ev.slice(0, max).forEach((x) => c.appendChild(puce(x, d, x.f <= maint)));
     if (ev.length > max) { const p = document.createElement("div"); p.className = "plus"; p.textContent = "+ " + (ev.length - max) + " autre" + (ev.length - max > 1 ? "s" : ""); c.appendChild(p); }
     g.appendChild(c);
   }
@@ -674,6 +683,10 @@ function vueSemaine(n) {
   $("defile").scrollTop = garde !== null && garde > 0 ? garde : 7 * H_PX;
 }
 function defilerMaintenant() { const d = $("defile"); if (d) d.scrollTop = Math.max(0, (new Date().getHours() - 1) * H_PX); }
+// [bande, fond du mois, texte de la bande] : une teinte par mois, de janvier à décembre
+const PASTELS_MOIS = [["#DCE8F8", "#EEF4FC", "#123F78"], ["#E6DDF6", "#F4EFFB", "#3E2A78"], ["#D8EFDF", "#EDF8F0", "#1F5C39"], ["#F8DDE6", "#FCEEF3", "#7A2443"],
+  ["#E3F0CF", "#F2F8E8", "#3A5A12"], ["#F6E9C4", "#FCF6E6", "#6B4E08"], ["#D3EEF0", "#EAF7F8", "#0E5157"], ["#F6E3C6", "#FCF4E8", "#6B4210"],
+  ["#E9E1D6", "#F6F2EC", "#5A4630"], ["#F6DCCF", "#FCEFE8", "#7A3315"], ["#DDE3EA", "#EFF2F6", "#2F3E50"], ["#F3D9D9", "#FBEDED", "#7A1F1F"]];
 function vueListe() {
   INST = {};
   const q = norm($("rech").value);
@@ -707,11 +720,18 @@ function vueListe() {
     }
   });
   lignes.sort((p, r) => p.j.localeCompare(r.j) || (p.rang - r.rang) || (p.x.d - r.x.d));
+  let mc = "", bloc = z;
   lignes.forEach(({ x, j, lib, fin }) => {
+    if (j.slice(0, 7) !== mc) {   // nouveau mois : bande avec son nom, puis tout le mois sur son fond pastel
+      mc = j.slice(0, 7); const [bande, fond, texte] = PASTELS_MOIS[+mc.slice(5, 7) - 1];
+      const m = document.createElement("div"); m.className = "mt"; m.textContent = MOIS[+mc.slice(5, 7) - 1] + " " + mc.slice(0, 4);
+      m.style.background = bande; m.style.color = texte; z.appendChild(m);
+      bloc = document.createElement("div"); bloc.className = "bloc-mois"; bloc.style.background = fond; z.appendChild(bloc);
+    }
     if (j !== jc) {
       jc = j; const t = document.createElement("div"); t.className = "jt" + (j === aujS ? " auj" : ""); t.textContent = dateLongue(parseLoc(j)) + (j === aujS ? " — aujourd'hui" : "");
       if (!premier && j >= aujS) { premier = t; }
-      z.appendChild(t);
+      bloc.appendChild(t);
     }
     const li = document.createElement("div"); li.className = "ligne" + (fin <= maint ? " passe" : ""); li.dataset.i = idInst(x);
     const h = document.createElement("div");
@@ -723,7 +743,7 @@ function vueListe() {
     c.append(b);
     if (x.ev.rr || x.ev.serie) c.append(" 🔁");
     if (x.ev.l) { const lc = document.createElement("div"); lc.className = "lieu"; lc.textContent = "📍 " + x.ev.l; c.appendChild(lc); }
-    li.append(h, c); z.appendChild(li);
+    li.append(h, c); bloc.appendChild(li);
   });
   $("zone").replaceChildren(z);
   document.documentElement.style.setProperty("--haut-entete", ($("entete").offsetHeight + 4) + "px");
