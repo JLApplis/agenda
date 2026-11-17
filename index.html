@@ -59,8 +59,7 @@ h1::first-letter { text-transform: uppercase; }
 .ajout-jour { visibility: hidden; width: 20px; height: 20px; line-height: 19px; text-align: center; border-radius: 50%; background: var(--bleu); color: #fff; font-size: 15px; }
 .case:hover .ajout-jour { visibility: visible; }
 @media (hover: none) { .ajout-jour { display: none; } }
-.ev { display: block; font-size: 12px; line-height: 1.35; padding: 1px 4px; margin: 1px 0; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: var(--bleu-soft); color: #123F78; border-left: 3px solid var(--bleu); }
-.ev.jour { color: #fff; border-left: none; }
+.ev { display: block; font-size: 12px; line-height: 1.35; padding: 1px 4px; margin: 1px 0; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: var(--bleu); color: #fff; }
 .ev:hover { filter: brightness(.94); }
 .plus { font-size: 11px; color: var(--muted); padding-left: 3px; }
 /* semaine / jour */
@@ -126,6 +125,11 @@ h1::first-letter { text-transform: uppercase; }
 .rappels .badge button { border: none; background: none; color: inherit; cursor: pointer; padding: 0 0 0 4px; font-weight: 700; }
 .err { color: var(--tomato); font-weight: 600; min-height: 1.2em; margin-top: 8px; }
 .choix-serie { display: grid; gap: 8px; margin-top: 10px; }
+.palette { display: flex; flex-wrap: wrap; gap: 8px; }
+.pastille-cat { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(0,0,0,.12); cursor: pointer; font: 700 16px/1 var(--font); padding: 0; }
+.pastille-cat.choisie { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--fg); }
+.pastille-cat:focus-visible { outline: 3px solid var(--bleu-clair); outline-offset: 2px; }
+.nom-cat { color: var(--fg); font-weight: 700; }
 /* menu latéral */
 #voile { position: fixed; inset: 0; background: rgba(20,30,45,.35); z-index: 20; }
 #tiroir { position: fixed; top: 0; bottom: 0; left: 0; width: min(310px, 86vw); background: var(--bg); z-index: 21; box-shadow: 6px 0 24px rgba(0,0,0,.18);
@@ -188,7 +192,7 @@ h1::first-letter { text-transform: uppercase; }
   .btn-auj .long { display: none; } .btn-auj .court { display: inline; }
   .etat { display: none; }
   .case { min-height: 72px; padding: 2px 1px; }
-  .ev { font-size: 10.5px; padding: 0 2px; border-left-width: 2px; }
+  .ev { font-size: 10.5px; padding: 0 2px; }
   .ligne { grid-template-columns: 82px 1fr; padding: 8px 10px; }
   .onglets button { padding: 7px 9px; }
 }
@@ -312,7 +316,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.0";
+const VERSION = "1.1";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -574,7 +578,7 @@ function rendre() {
 function puce(x, jour) {
   const s = document.createElement("span"); s.className = "ev" + (x.ev.a ? " jour" : ""); s.dataset.i = idInst(x);
   const c = couleurDe(x.ev);
-  if (x.ev.a) { s.style.background = c; s.style.color = texteSur(c); } else { s.style.borderLeftColor = c; }
+  s.style.background = c; s.style.color = texteSur(c);
   const debutIci = x.s.slice(0, 10) === ymd(jour);
   s.textContent = (x.ev.a ? "" : (debutIci ? x.s.slice(11) + " " : "… ")) + x.ev.t;
   s.title = x.ev.t; return s;
@@ -813,8 +817,19 @@ function formulaire(x, opts) {
   fFin.value = rr0 && rr0.u ? "u" : rr0 && rr0.n ? "n" : "";
   const fU = el("input", { type: "date", id: "fU", value: rr0 && rr0.u ? rr0.u : "" }), fN = el("input", { type: "number", id: "fN", min: "1", max: "999", value: rr0 && rr0.n ? rr0.n : 10 });
   const blocRR = el("div", null, el("div", { class: "ligne-rr" }, "Tous les", fI, unite), joursBox, el("div", { class: "ligne-rr" }, "Fin :", fFin, fU, fN));
-  const fC = el("select", { id: "fC" }, el("option", { value: "" }, "Sans catégorie"), REG.categories.map((c) => el("option", { value: c.id }, c.nom || "Sans nom")));
-  fC.value = neuf ? "" : (ev.cat && catDe(ev) ? ev.cat : "");
+  // catégorie : palette de pastilles de couleur, le nom s'affiche à côté
+  let CAT = neuf ? "" : (ev.cat && catDe(ev) ? ev.cat : "");
+  const nomCat = el("span", { class: "nom-cat" });
+  const palette = el("div", { class: "palette", role: "radiogroup", "aria-label": "Catégorie" });
+  function majPalette() {
+    const cats = [{ id: "", nom: "Sans catégorie", couleur: "#1A5FB4" }, ...REG.categories];
+    palette.replaceChildren(...cats.map((c) => {
+      const b = el("button", { type: "button", class: "pastille-cat" + (c.id === CAT ? " choisie" : ""), role: "radio", "aria-checked": String(c.id === CAT), title: c.nom || "Sans nom", "aria-label": c.nom || "Sans nom",
+        style: "background:" + c.couleur + ";color:" + texteSur(c.couleur), onclick: () => { CAT = c.id; majPalette(); } }, c.id === CAT ? "✓" : "");
+      return b;
+    }));
+    const c = cats.find((x) => x.id === CAT) || cats[0]; nomCat.textContent = c.nom || "Sans nom";
+  }
   const rapBox = el("div", { class: "rappels" });
   const fRapAj = el("select", { id: "fRapAj" });
   const fL = el("input", { type: "text", id: "fL", value: neuf ? "" : (ev.l || ""), autocomplete: "off" });
@@ -849,12 +864,12 @@ function formulaire(x, opts) {
       el("div", { class: "duo" }, el("div", null, el("label", { for: "fDS" }, "Début"), fDS), el("div", null, el("label", { for: "fHS" }, " "), fHS)),
       el("div", { class: "duo" }, el("div", null, el("label", { for: "fDE" }, "Fin"), fDE), el("div", null, el("label", { for: "fHE" }, " "), fHE)),
       el("label", { for: "fR" }, "Répétition"), fR, blocRR,
-      el("label", { for: "fC" }, "Catégorie"), fC,
+      el("label", null, "Couleur / catégorie : ", nomCat), palette,
       el("label", null, "Rappels"), rapBox, fRapAj,
       el("label", { for: "fL" }, "Lieu"), fL,
       el("label", { for: "fD" }, "Description"), fD, err),
     el("div", { class: "act" }, el("button", { class: "btn", type: "button", onclick: fermerDlg }, "Annuler"), enr));
-  majForme(); majRappels(); if (neuf) fT.focus();
+  majForme(); majRappels(); majPalette(); if (neuf) fT.focus();
 
   enr.addEventListener("click", () => {
     const t = fT.value.trim(), a = fA.checked, ds = fDS.value, de = fDE.value || ds;
@@ -871,7 +886,7 @@ function formulaire(x, opts) {
       if (fFin.value === "u") { if (!fU.value) return ko("Indique la date de fin de la répétition."); if (fU.value < ds) return ko("La fin de la répétition est avant le début."); rr.u = fU.value; }
       if (fFin.value === "n") rr.n = Math.min(999, Math.max(1, parseInt(fN.value, 10) || 1));
     }
-    const champs = { t, a, s: ns, e: ne, l: fL.value.trim(), d: fD.value.trim(), cat: fC.value, rap: RAP === null ? undefined : RAP };
+    const champs = { t, a, s: ns, e: ne, l: fL.value.trim(), d: fD.value.trim(), cat: CAT, rap: RAP === null ? undefined : RAP };
     const garde = (o) => { const r = {}; ["inv", "prov", "src", "gid"].forEach((k) => { if (o && o[k] !== undefined) r[k] = o[k]; }); return r; };
     if (neuf) { appliquer([[nouvelId(), { ...champs, rr: rr || undefined, src: "appli" }]]); fermerDlg(); REF = parseLoc(ns); rendre(); toast("Événement ajouté."); return; }
     if (!master) {   // événement simple (il peut devenir répété)
