@@ -1,6 +1,6 @@
 # 📅 Agenda
 
-**Agenda personnel** : vues Mois, Semaine, Jour et Liste, événements répétés, rappels, catégories colorées, impression. Synchronisé entre le téléphone et l'ordinateur. Remplace Google Agenda.
+**Agenda personnel** : vues Mois (défilement continu) et Liste, événements répétés, rappels, catégories colorées, impression. Synchronisé entre le téléphone et l'ordinateur. Remplace Google Agenda.
 
 **[▶️ Ouvrir l'appli](https://jlapplis.github.io/agenda/)**
 

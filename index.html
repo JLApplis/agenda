@@ -44,7 +44,7 @@ h1::first-letter { text-transform: uppercase; }
 .entete { position: sticky; top: 0; z-index: 12; background: var(--bg); padding-top: 10px; }
 .entete header { margin-top: 0; }
 .entete .barre { margin-bottom: 0; padding-bottom: 8px; }
-.liste .jt, .grille-sem { scroll-margin-top: var(--haut-entete, 130px); }
+.liste .jt { scroll-margin-top: var(--haut-entete, 130px); }
 /* barre des vues */
 .barre { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
 .onglets { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
@@ -71,24 +71,6 @@ h1::first-letter { text-transform: uppercase; }
 .ev { display: block; font-size: 12px; line-height: 1.35; padding: 1px 4px; margin: 1px 0; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: var(--bleu); color: #fff; }
 .ev:hover { filter: brightness(.94); }
 .plus { font-size: 11px; color: var(--muted); padding-left: 3px; }
-/* semaine / jour */
-.grille-sem { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.sem-tete, .sem-jour { display: grid; grid-template-columns: 46px repeat(var(--n), minmax(0, 1fr)); }
-.sem-tete div { padding: 6px 2px; text-align: center; font-size: 12px; font-weight: 600; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; }
-.sem-tete div:first-child { cursor: default; }
-.sem-tete div.auj { background: var(--auj); }
-.sem-tete b { display: block; font-size: 17px; }
-.sem-jour > div { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 2px; min-height: 26px; }
-.sem-jour > div:first-child { font-size: 11px; color: var(--muted); text-align: right; padding: 4px; }
-.defile { max-height: 66vh; overflow-y: auto; }
-.sem-corps { display: grid; grid-template-columns: 46px repeat(var(--n), minmax(0, 1fr)); position: relative; }
-.heures div { height: 44px; font-size: 11px; color: var(--muted); text-align: right; padding-right: 4px; transform: translateY(-7px); }
-.col { position: relative; border-left: 1px solid var(--line); cursor: copy; }
-.col .h { height: 44px; border-bottom: 1px solid #EEF2F7; }
-.col.auj { background: #FFFDF3; }
-.blk { position: absolute; border-radius: 6px; font-size: 11px; padding: 2px 4px; overflow: hidden; cursor: pointer; border: 1px solid #fff; color: #fff; }
-.blk b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
-.maintenant { position: absolute; left: 0; right: 0; height: 2px; background: var(--tomato); z-index: 3; pointer-events: none; }
 /* liste */
 .liste { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .liste .jt { padding: 8px 14px; font-weight: 700; background: rgba(255,255,255,.55); border-bottom: 1px solid var(--line); }
@@ -142,6 +124,11 @@ h1::first-letter { text-transform: uppercase; }
 .rappels .badge button { border: none; background: none; color: inherit; cursor: pointer; padding: 0 0 0 4px; font-weight: 700; }
 .err { color: var(--tomato); font-weight: 600; min-height: 1.2em; margin-top: 8px; }
 .choix-serie { display: grid; gap: 8px; margin-top: 10px; }
+.jour-liste { display: grid; gap: 6px; margin-top: 8px; }
+.jour-ligne { display: flex; align-items: center; gap: 10px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; cursor: pointer; color: var(--fg); }
+.jour-ligne:hover { background: var(--bleu-soft); }
+.jour-h { width: 100px; flex: none; font-size: 14px; color: #4C5868; }
+.jour-ligne .etiq { display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 600; overflow-wrap: anywhere; }
 .palette { display: flex; flex-wrap: wrap; gap: 8px; }
 .pastille-cat { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(0,0,0,.12); cursor: pointer; font: 700 16px/1 var(--font); padding: 0; }
 .pastille-cat.choisie { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--fg); }
@@ -218,11 +205,10 @@ h1::first-letter { text-transform: uppercase; }
   body { background: #fff; padding: 0; }
   .entete, header, .barre, .fab, #tiroir, #voile, .toast, .liste-nav, .ajout-jour, .bandeau-info { display: none !important; }
   .titre-impr { display: block; font: 600 20px var(--display); margin: 0 0 8px; }
-  .defile { max-height: none; overflow: visible; }
-  .cadre-mois, .grille-sem, .liste { border-radius: 0; }
+  .cadre-mois, .liste { border-radius: 0; }
   .pas-impr { display: none !important; }
   .mois-jn { position: static; }
-  .ev, .blk, .ligne .etiq, .liste .mt, .bloc-mois, .mt-mois, .case { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ev, .ligne .etiq, .liste .mt, .bloc-mois, .mt-mois, .case { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .case { min-height: 90px; }
 }
 </style>
@@ -250,8 +236,6 @@ h1::first-letter { text-transform: uppercase; }
   <div class="tiroir-tete"><span class="tiroir-titre">Agenda</span><button class="fermer-tiroir" id="fermer-tiroir" type="button" aria-label="Fermer le menu">×</button></div>
   <div class="tiroir-label">Affichage</div>
   <button class="tiroir-item" data-vue="mois" type="button"><span class="ic">🗓️</span>Mois</button>
-  <button class="tiroir-item" data-vue="semaine" type="button"><span class="ic">📆</span>Semaine</button>
-  <button class="tiroir-item" data-vue="jour" type="button"><span class="ic">🕘</span>Jour</button>
   <button class="tiroir-item" data-vue="liste" type="button"><span class="ic">📋</span>Liste</button>
   <div class="tiroir-sep"></div>
   <div class="tiroir-label">Catégories affichées</div>
@@ -278,8 +262,6 @@ h1::first-letter { text-transform: uppercase; }
   <div class="barre" id="barre">
     <div class="onglets" role="tablist">
       <button type="button" data-vue="mois">Mois</button>
-      <button type="button" data-vue="semaine">Semaine</button>
-      <button type="button" data-vue="jour">Jour</button>
       <button type="button" data-vue="liste">Liste</button>
     </div>
     <input type="search" class="recherche" id="rech" placeholder="Rechercher…" aria-label="Rechercher un événement">
@@ -337,7 +319,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "1.8";
+const VERSION = "1.9";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -366,7 +348,7 @@ $("version").textContent = VERSION;
 let UID = null, EV = {}, ANNEES = [], REG = { categories: [], rappelDefaut: null, rappelDefautJournee: null };
 let desabonner = [], CHARGE = false, MODIFS = 0, DERNIERE_SAUV = "";
 let VUE = "mois", REF = new Date();
-try { const v = localStorage.getItem("agenda_vue"); if (["mois", "semaine", "jour", "liste"].includes(v)) VUE = v; else if (window.innerWidth < 640) VUE = "liste"; } catch (e) { /* sans gravité */ }
+try { const v = localStorage.getItem("agenda_vue"); if (["mois", "liste"].includes(v)) VUE = v; else if (window.innerWidth < 640) VUE = "liste"; } catch (e) { /* sans gravité */ }
 let CACHES = new Set();
 try { CACHES = new Set(JSON.parse(localStorage.getItem("agenda_caches") || "[]")); } catch (e) { /* sans gravité */ }
 
@@ -556,9 +538,9 @@ $("voile").addEventListener("click", () => ouvrirTiroir(false));
 document.querySelectorAll("[data-vue]").forEach((b) => b.addEventListener("click", () => montrer(b.dataset.vue)));
 function montrer(v) {
   if (v !== "reglages") REG_SALE = false;
-  VUE = v; if (["mois", "semaine", "jour", "liste"].includes(v)) { try { localStorage.setItem("agenda_vue", v); } catch (e) { /* sans gravité */ } }
+  VUE = v; if (["mois", "liste"].includes(v)) { try { localStorage.setItem("agenda_vue", v); } catch (e) { /* sans gravité */ } }
   ouvrirTiroir(false);
-  const cal = ["mois", "semaine", "jour", "liste"].includes(v);
+  const cal = ["mois", "liste"].includes(v);
   $("zone").hidden = !cal; $("barre").hidden = !cal; $("fab").hidden = !cal;
   ["prec", "suiv", "auj"].forEach((id) => { $(id).hidden = !cal; });
   $("vue-reglages").hidden = v !== "reglages"; $("vue-sauvegarde").hidden = v !== "sauvegarde";
@@ -581,25 +563,24 @@ function rendreFiltres() {
 }
 $("prec").addEventListener("click", () => decaler(-1));
 $("suiv").addEventListener("click", () => decaler(1));
-$("auj").addEventListener("click", () => { REF = new Date(); ALLER = "jour"; rendre(); defilerMaintenant(); });
+$("auj").addEventListener("click", () => { REF = new Date(); ALLER = "jour"; rendre(); });
 function decaler(s) {
   if (VUE === "mois") { REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1); ALLER = "mois"; }
-  else if (VUE === "liste") REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1);
-  else if (VUE === "semaine") REF = AJ(REF, 7 * s); else REF = AJ(REF, s);
+  else REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1);
   rendre();
 }
 $("rech").addEventListener("input", () => { if (VUE !== "liste" && $("rech").value.trim()) { VUE = "liste"; document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === "liste")); } rendre(); });
-$("fab").addEventListener("click", () => formulaire(null, { jour: VUE === "jour" || VUE === "semaine" ? (ymd(REF) === ymd(new Date()) || VUE === "jour" ? ymd(REF) : ymd(lundi(REF))) : ymd(new Date()) }));
+$("fab").addEventListener("click", () => formulaire(null, { jour: ymd(new Date()) }));
 $("imprimer").addEventListener("click", () => {
-  ouvrirTiroir(false); if (!["mois", "semaine", "jour", "liste"].includes(VUE)) montrer("mois");
+  ouvrirTiroir(false); if (!["mois", "liste"].includes(VUE)) montrer("mois");
   if (VUE === "mois") { const k = cleMois(REF); document.querySelectorAll(".sem-ligne, .mt-mois").forEach((e) => e.classList.toggle("pas-impr", !e.dataset.mois.split(" ").includes(k))); }   // en Mois, on n'imprime que le mois affiché
   setTimeout(() => window.print(), 100);
 });
 $("aller-reprise").addEventListener("click", () => montrer("sauvegarde"));
 
 function rendre() {
-  if (!UID || !["mois", "semaine", "jour", "liste"].includes(VUE)) return;
-  if (VUE === "mois") vueMois(); else if (VUE === "liste") vueListe(); else vueSemaine(VUE === "jour" ? 1 : 7);
+  if (!UID || !["mois", "liste"].includes(VUE)) return;
+  if (VUE === "mois") vueMois(); else vueListe();
   $("titre-impr").textContent = $("titre").textContent;
 }
 // mélange une couleur avec du blanc (t > 0) ou du noir (t < 0)
@@ -709,58 +690,6 @@ window.addEventListener("scroll", () => {
     else if (window.scrollY < 600 && PLAGE.deb > new Date(2000, 0, 1)) { PLAGE.deb = mois(PLAGE.deb, -6); if (largeur() > 25) PLAGE.fin = mois(PLAGE.fin, -6); ALLER = null; vueMois(); }
   });
 }, { passive: true });
-const H_PX = 44;
-function vueSemaine(n) {
-  INST = {};
-  const deb = n === 7 ? lundi(REF) : jourDe(REF), fin = AJ(deb, n - 1), aujS = ymd(new Date());
-  $("titre").textContent = n === 1 ? dateLongue(deb) : (deb.getMonth() === fin.getMonth() ? deb.getDate() + " – " + fin.getDate() + " " + MOIS[fin.getMonth()] + " " + fin.getFullYear() : deb.getDate() + " " + MOIS_C[deb.getMonth()] + " – " + fin.getDate() + " " + MOIS_C[fin.getMonth()] + " " + fin.getFullYear());
-  const l = instances(deb, AJ(deb, n));
-  const g = document.createElement("div"); g.className = "grille-sem"; g.style.setProperty("--n", n);
-  const tete = document.createElement("div"); tete.className = "sem-tete"; tete.appendChild(document.createElement("div"));
-  const jr = document.createElement("div"); jr.className = "sem-jour";
-  const lj = document.createElement("div"); lj.textContent = "Journée"; jr.appendChild(lj);
-  for (let i = 0; i < n; i++) {
-    const d = AJ(deb, i), t = document.createElement("div");
-    t.className = ymd(d) === aujS ? "auj" : ""; t.dataset.jv = ymd(d);
-    t.innerHTML = JOURS[jsem(d)] + "<b>" + d.getDate() + "</b>"; tete.appendChild(t);
-    const c = document.createElement("div"); duJour(l, d).filter((x) => x.ev.a).forEach((x) => c.appendChild(puce(x, d))); jr.appendChild(c);
-  }
-  const df = document.createElement("div"); df.className = "defile"; df.id = "defile";
-  const corps = document.createElement("div"); corps.className = "sem-corps"; corps.style.setProperty("--n", n);
-  const hs = document.createElement("div"); hs.className = "heures";
-  for (let h = 0; h < 24; h++) { const x = document.createElement("div"); x.textContent = h ? p2(h) + ":00" : ""; hs.appendChild(x); }
-  corps.appendChild(hs);
-  for (let i = 0; i < n; i++) {
-    const d = AJ(deb, i), col = document.createElement("div"); col.className = "col" + (ymd(d) === aujS ? " auj" : ""); col.dataset.cj = ymd(d);
-    for (let h = 0; h < 24; h++) { const x = document.createElement("div"); x.className = "h"; col.appendChild(x); }
-    const evs = duJour(l, d).filter((x) => !x.ev.a), cols = [], place = [];
-    evs.forEach((x) => {
-      let a = x.d < d ? 0 : x.d.getHours() + x.d.getMinutes() / 60;
-      let b = x.f >= AJ(d, 1) ? 24 : x.f.getHours() + x.f.getMinutes() / 60;
-      b = Math.min(Math.max(b, a + 0.4), 24);
-      let c = cols.findIndex((fin) => fin <= a + 0.001); if (c < 0) { c = cols.length; cols.push(b); } else cols[c] = b;
-      place.push({ x, a, b, c });
-    });
-    // largeur : nombre de colonnes utilisées par le groupe d'événements qui se chevauchent
-    place.forEach((p) => {
-      const nb = Math.max(1, ...place.filter((q) => q.a < p.b && q.b > p.a).map((q) => q.c + 1));
-      const k = document.createElement("div"); k.className = "blk"; k.dataset.i = idInst(p.x);
-      const coul = couleurDe(p.x.ev); k.style.background = coul; k.style.color = texteSur(coul);
-      k.style.top = (p.a * H_PX) + "px"; k.style.height = ((p.b - p.a) * H_PX - 2) + "px";
-      k.style.left = "calc(" + (p.c * 100 / nb) + "% + 1px)"; k.style.width = "calc(" + (100 / nb) + "% - 2px)";
-      const b = document.createElement("b"); b.textContent = p.x.ev.t; k.appendChild(b);
-      k.appendChild(document.createTextNode(p.x.s.slice(11) + " – " + p.x.e.slice(11) + (p.x.ev.l ? " · " + p.x.ev.l : "")));
-      k.title = p.x.ev.t; col.appendChild(k);
-    });
-    if (ymd(d) === aujS) { const now = new Date(), m = document.createElement("div"); m.className = "maintenant"; m.style.top = ((now.getHours() + now.getMinutes() / 60) * H_PX) + "px"; col.appendChild(m); }
-    corps.appendChild(col);
-  }
-  df.appendChild(corps); g.append(tete, jr, df);
-  const garde = $("defile") ? $("defile").scrollTop : null;
-  $("zone").replaceChildren(g);
-  $("defile").scrollTop = garde !== null && garde > 0 ? garde : 7 * H_PX;
-}
-function defilerMaintenant() { const d = $("defile"); if (d) d.scrollTop = Math.max(0, (new Date().getHours() - 1) * H_PX); }
 // [bande, fond du mois, texte de la bande] : une teinte par mois, de janvier à décembre
 const PASTELS_MOIS = [["#DCE8F8", "#EEF4FC", "#123F78"], ["#E6DDF6", "#F4EFFB", "#3E2A78"], ["#D8EFDF", "#EDF8F0", "#1F5C39"], ["#F8DDE6", "#FCEEF3", "#7A2443"],
   ["#E3F0CF", "#F2F8E8", "#3A5A12"], ["#F6E9C4", "#FCF6E6", "#6B4E08"], ["#D3EEF0", "#EAF7F8", "#0E5157"], ["#F6E3C6", "#FCF4E8", "#6B4210"],
@@ -831,10 +760,7 @@ const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toL
 $("zone").addEventListener("click", (e) => {
   const t = e.target.closest("[data-i]"); if (t) { detail(INST[t.dataset.i]); return; }
   const nj = e.target.closest("[data-nj]"); if (nj) { formulaire(null, { jour: nj.dataset.nj }); return; }
-  const jv = e.target.closest("[data-jv]"); if (jv) { REF = parseLoc(jv.dataset.jv); montrer("jour"); return; }
-  const col = e.target.closest("[data-cj]");
-  if (col) { const y = e.clientY - col.getBoundingClientRect().top, h = Math.min(23.5, Math.max(0, Math.floor(y / H_PX * 2) / 2)); formulaire(null, { jour: col.dataset.cj, heure: p2(Math.floor(h)) + ":" + (h % 1 ? "30" : "00") }); return; }
-  const c = e.target.closest(".case"); if (c) { REF = parseLoc(c.dataset.j); montrer("jour"); }
+  const c = e.target.closest(".case"); if (c) ouvrirJour(c.dataset.j);
 });
 
 /* ---------- fenêtre ---------- */
@@ -882,6 +808,24 @@ function detail(x) {
   );
 }
 const rappelsDe = (ev) => Array.isArray(ev.rap) ? ev.rap : (ev.a ? (REG.rappelDefautJournee != null ? [REG.rappelDefautJournee] : []) : (REG.rappelDefaut != null ? [REG.rappelDefaut] : []));
+
+/* clic sur un jour de la vue Mois : tous ses événements + ajout */
+function ouvrirJour(j) {
+  const d = parseLoc(j), maint = new Date();
+  const l = duJour(instances(d, AJ(d, 1)), d);
+  ouvrirDlg(
+    el("h2", null, dateLongue(d).charAt(0).toUpperCase() + dateLongue(d).slice(1)),
+    l.length ? el("div", { class: "jour-liste" }, l.map((x) => {
+      const coul = couleurDe(x.ev), pastel = x.f <= maint;
+      const h = x.ev.a ? "Journée" : (x.d < d ? "→ " + x.e.slice(11) : x.s.slice(11) + (x.f > AJ(d, 1) ? " →" : " – " + x.e.slice(11)));
+      return el("button", { type: "button", class: "jour-ligne", onclick: () => detail(x) }, el("span", { class: "jour-h" }, h),
+        el("b", { class: "etiq", style: "background:" + (pastel ? melange(coul, 0.62) : coul) + ";color:" + (pastel ? melange(coul, -0.55) : texteSur(coul)) }, x.ev.t),
+        x.ev.rr || x.ev.serie ? " 🔁" : null);
+    })) : el("p", { class: "m" }, "Aucun événement ce jour."),
+    el("div", { class: "act" },
+      el("button", { class: "btn g", type: "button", onclick: fermerDlg }, "Fermer"),
+      el("button", { class: "btn prim", type: "button", onclick: () => formulaire(null, { jour: j }) }, "＋ Ajouter un événement ce jour")));
+}
 
 /* choix pour les séries : cette occurrence / les suivantes / toute la série */
 function choixSerie(titre, avecSuivantes, suite) {
@@ -1122,7 +1066,6 @@ function verifierRappels() {
   });
 }
 setInterval(verifierRappels, 30000);
-setInterval(() => { if (VUE === "semaine" || VUE === "jour") rendre(); }, 5 * 60000);
 
 /* ---------- toasts ---------- */
 let minuteurToast = null;
