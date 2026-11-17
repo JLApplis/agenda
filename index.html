@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agenda</title>
+<meta name="theme-color" content="#1A5FB4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fredoka:wght@500;600&display=swap">
+<style>
+/* Même organisation que COURSES, en bleu */
+:root {
+  --bg: #F3F6FB;  --surface: #FFFFFF;  --line: #DFE6F0;  --fg: #1F2733;  --muted: #6E7A8A;
+  --bleu: #1A5FB4;  --bleu-soft: #E4EEFB;  --bleu-clair: #A9C4EA;  --tomato: #D9483B;  --field: #FAFCFF;
+  --auj: #FFF6D6;
+  --font: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --display: "Fredoka", "Figtree", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.4 var(--font);
+  padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); padding-block: env(safe-area-inset-top, 0px) 80px; }
+.page { max-width: 1200px; margin: 0 auto; }
+button { font: inherit; }
+/* bandeau */
+header { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 16px; background: var(--bleu); color: #fff; box-shadow: 0 6px 18px rgba(26,95,180,.25); }
+h1 { margin: 0; font: 600 22px/1.15 var(--display); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+h1::first-letter { text-transform: uppercase; }
+.btn-menu { flex: none; width: 40px; height: 40px; border: none; border-radius: 12px; background: rgba(255,255,255,.16); color: #fff; font-size: 20px; line-height: 1; cursor: pointer; position: relative; }
+.btn-menu:hover, .btn-menu:focus-visible { background: rgba(255,255,255,.28); outline: none; }
+.btn-auj { flex: none; height: 40px; border: none; border-radius: 12px; background: rgba(255,255,255,.16); color: #fff; font-weight: 600; padding: 0 12px; cursor: pointer; }
+.btn-auj:hover { background: rgba(255,255,255,.28); }
+.btn-auj .court { display: none; }
+#dlg .act { position: sticky; bottom: -18px; background: var(--surface); padding: 10px 0 4px; margin-bottom: -4px; }
+.etat { font-size: 12px; font-weight: 600; background: rgba(255,255,255,.18); padding: 4px 9px; border-radius: 12px; white-space: nowrap; max-width: 30vw; overflow: hidden; text-overflow: ellipsis; }
+.etat.alerte { background: var(--tomato); }
+.pastille { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--tomato); color: #fff; font: 700 11px/20px var(--font); box-shadow: 0 0 0 2px var(--bleu); }
+/* barre des vues */
+.barre { display: flex; align-items: center; gap: 6px; margin: 10px 0 8px; flex-wrap: wrap; }
+.onglets { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
+.onglets button { border: none; background: transparent; color: var(--fg); font-weight: 600; font-size: 14px; padding: 7px 12px; border-radius: 9px; cursor: pointer; }
+.onglets button.actif { background: var(--bleu); color: #fff; }
+.recherche { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font: inherit; color: var(--fg); }
+.recherche:focus { outline: none; border-color: var(--bleu); }
+/* mois */
+.mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.mois .jn { padding: 6px 2px; font-weight: 600; font-size: 12px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); }
+.case { min-height: 104px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 3px; overflow: hidden; cursor: pointer; position: relative; }
+.case:nth-child(7n) { border-right: none; }
+.case.hors { background: #F8FAFD; color: #A8B2C0; }
+.case.auj { background: var(--auj); }
+.case .num { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; margin: 0 2px 3px; }
+.case.auj .num span:first-child { background: var(--bleu); color: #fff; border-radius: 10px; padding: 0 6px; }
+.ajout-jour { visibility: hidden; width: 20px; height: 20px; line-height: 19px; text-align: center; border-radius: 50%; background: var(--bleu); color: #fff; font-size: 15px; }
+.case:hover .ajout-jour { visibility: visible; }
+@media (hover: none) { .ajout-jour { display: none; } }
+.ev { display: block; font-size: 12px; line-height: 1.35; padding: 1px 4px; margin: 1px 0; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: var(--bleu-soft); color: #123F78; border-left: 3px solid var(--bleu); }
+.ev.jour { color: #fff; border-left: none; }
+.ev:hover { filter: brightness(.94); }
+.plus { font-size: 11px; color: var(--muted); padding-left: 3px; }
+/* semaine / jour */
+.grille-sem { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.sem-tete, .sem-jour { display: grid; grid-template-columns: 46px repeat(var(--n), minmax(0, 1fr)); }
+.sem-tete div { padding: 6px 2px; text-align: center; font-size: 12px; font-weight: 600; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; }
+.sem-tete div:first-child { cursor: default; }
+.sem-tete div.auj { background: var(--auj); }
+.sem-tete b { display: block; font-size: 17px; }
+.sem-jour > div { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 2px; min-height: 26px; }
+.sem-jour > div:first-child { font-size: 11px; color: var(--muted); text-align: right; padding: 4px; }
+.defile { max-height: 66vh; overflow-y: auto; }
+.sem-corps { display: grid; grid-template-columns: 46px repeat(var(--n), minmax(0, 1fr)); position: relative; }
+.heures div { height: 44px; font-size: 11px; color: var(--muted); text-align: right; padding-right: 4px; transform: translateY(-7px); }
+.col { position: relative; border-left: 1px solid var(--line); cursor: copy; }
+.col .h { height: 44px; border-bottom: 1px solid #EEF2F7; }
+.col.auj { background: #FFFDF3; }
+.blk { position: absolute; border-radius: 6px; font-size: 11px; padding: 2px 4px; overflow: hidden; cursor: pointer; border: 1px solid #fff; color: #fff; }
+.blk b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.maintenant { position: absolute; left: 0; right: 0; height: 2px; background: var(--tomato); z-index: 3; pointer-events: none; }
+/* liste */
+.liste { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.liste .jt { padding: 8px 14px; font-weight: 700; background: #F6F9FD; border-bottom: 1px solid var(--line); }
+.liste .jt.auj { background: var(--auj); }
+.ligne { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); cursor: pointer; align-items: start; }
+.ligne:hover { background: var(--bleu-soft); }
+.ligne.passe { opacity: .55; }
+.ligne .pt { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.ligne .lieu { color: var(--muted); font-size: 13px; }
+.liste-nav { display: flex; justify-content: center; gap: 10px; padding: 10px; }
+.vide { padding: 22px; text-align: center; color: var(--muted); }
+.lien { background: none; border: none; color: var(--bleu); font: 600 14px var(--font); cursor: pointer; padding: 6px 0; }
+.lien.rouge { color: var(--tomato); }
+/* bouton + */
+.fab { position: fixed; right: max(18px, env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 58px; height: 58px; border-radius: 18px; border: none; background: var(--tomato); color: #fff; font: 600 32px/1 var(--display); box-shadow: 0 6px 16px rgba(217,72,59,.35); cursor: pointer; z-index: 15; }
+/* fenêtres */
+#voile-dlg { position: fixed; inset: 0; background: rgba(20,30,45,.4); z-index: 25; display: flex; align-items: center; justify-content: center; padding: 10px; }
+#dlg { background: var(--surface); border-radius: 18px; width: 100%; max-width: 560px; max-height: 92vh; overflow: auto; padding: 18px; box-shadow: 0 12px 30px rgba(0,0,0,.2); }
+#dlg h2 { margin: 0 0 8px; font: 600 21px var(--display); overflow-wrap: anywhere; }
+#dlg .m { color: var(--muted); margin: 5px 0; overflow-wrap: anywhere; }
+#dlg pre { white-space: pre-wrap; font-family: inherit; background: #F6F9FD; border: 1px solid var(--line); padding: 8px 10px; border-radius: 10px; overflow-wrap: anywhere; }
+.badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--bleu-soft); color: #123F78; margin: 2px 4px 2px 0; }
+.act { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
+.act .g { margin-right: auto; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+.btn.prim { background: var(--bleu); color: #fff; border-color: var(--bleu); }
+.btn.dang { background: #FCE7E4; color: #A3291E; border-color: #F5C6C0; }
+.btn:disabled { opacity: .5; cursor: default; }
+.form label { display: block; font-size: 13px; font-weight: 600; color: #4C5868; margin: 10px 0 4px; }
+.form input[type=text], .form input[type=date], .form input[type=time], .form input[type=number], .form textarea, .form select {
+  font: inherit; width: 100%; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--field); color: var(--fg); }
+.form input:focus, .form textarea:focus, .form select:focus { outline: none; border-color: var(--bleu); }
+.form textarea { min-height: 80px; resize: vertical; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chk { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-weight: 600; }
+.chk input { width: 18px; height: 18px; }
+.jours-sem { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.jours-sem label { margin: 0; display: flex; align-items: center; gap: 3px; font-weight: 500; background: #F3F6FB; padding: 4px 8px; border-radius: 8px; }
+.ligne-rr { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.ligne-rr input[type=number] { width: 80px; }
+.ligne-rr input[type=date] { width: auto; }
+.rappels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rappels .badge button { border: none; background: none; color: inherit; cursor: pointer; padding: 0 0 0 4px; font-weight: 700; }
+.err { color: var(--tomato); font-weight: 600; min-height: 1.2em; margin-top: 8px; }
+.choix-serie { display: grid; gap: 8px; margin-top: 10px; }
+/* menu latéral */
+#voile { position: fixed; inset: 0; background: rgba(20,30,45,.35); z-index: 20; }
+#tiroir { position: fixed; top: 0; bottom: 0; left: 0; width: min(310px, 86vw); background: var(--bg); z-index: 21; box-shadow: 6px 0 24px rgba(0,0,0,.18);
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 12px calc(14px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px)); overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.tiroir-tete { display: flex; align-items: center; padding: 4px 8px 12px; }
+.tiroir-titre { flex: 1; font: 600 26px var(--display); color: var(--bleu); }
+.fermer-tiroir { border: none; background: transparent; font-size: 28px; color: var(--muted); cursor: pointer; width: 40px; height: 40px; border-radius: 50%; }
+.tiroir-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; padding: 8px 12px 4px; }
+.tiroir-item { display: flex; align-items: center; gap: 12px; width: 100%; border: none; background: transparent; color: var(--fg); font: 600 16px var(--font); text-align: left; padding: 10px 12px; border-radius: 0 22px 22px 0; cursor: pointer; }
+.tiroir-item:hover, .tiroir-item:focus-visible { background: #E7EDF6; outline: none; }
+.tiroir-item.actif { background: var(--bleu-soft); color: #123F78; }
+.tiroir-item .ic { width: 22px; text-align: center; flex: none; }
+.filtre { display: flex; align-items: center; gap: 10px; padding: 6px 12px; cursor: pointer; font-weight: 500; }
+.filtre input { width: 18px; height: 18px; accent-color: var(--bleu); }
+.filtre .pt { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.tiroir-sep { height: 1px; background: var(--line); margin: 8px 4px; }
+.tiroir-pied { margin-top: auto; padding: 16px 12px 4px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+.deco { background: none; border: none; color: var(--bleu); font: 600 13px var(--font); cursor: pointer; padding: 4px 0; }
+.deco-confirme { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; color: var(--fg); font-size: 14px; }
+.deco-btns { display: flex; gap: 8px; justify-content: flex-end; }
+/* blocs (sauvegarde, réglages) */
+.bloc-s { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; max-width: 760px; }
+.bloc-s h3 { margin: 0 0 6px; font: 600 18px var(--display); color: var(--bleu); }
+.bloc-s p { margin: 4px 0; font-size: 15px; }
+.bloc-s .note { color: #5B6676; font-size: 14px; }
+.btns { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 8px; }
+.sauv-msg { min-height: 20px; font-size: 14px; font-weight: 600; color: var(--bleu); margin-top: 8px; max-width: 760px; }
+.sauv-msg.alerte { color: var(--tomato); }
+.confirme { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: #FFF8F6; border: 1px solid #F5C6C0; border-radius: 12px; padding: 10px 12px; margin-top: 8px; font-size: 15px; }
+.confirme span { flex: 1; min-width: 180px; }
+.cat-ligne { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.cat-ligne input[type=text] { flex: 1; min-width: 0; font: inherit; padding: 7px 9px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--field); }
+.cat-ligne input[type=color] { width: 40px; height: 34px; border: none; background: none; padding: 0; cursor: pointer; }
+.cat-ligne small { color: var(--muted); white-space: nowrap; }
+.reg-ligne { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+.reg-ligne select { font: inherit; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--field); }
+.bandeau-info { background: var(--bleu-soft); border: 1px solid var(--bleu-clair); border-radius: 12px; padding: 10px 12px; margin: 0 0 10px; font-size: 15px; }
+/* connexion */
+.connexion { max-width: 400px; margin: 9vh auto 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: 0 10px 30px rgba(20,40,80,.10); }
+.connexion .haut { background: var(--bleu); color: #fff; text-align: center; padding: 26px 20px 22px; }
+.connexion .haut h1 { font-size: 40px; }
+.connexion .deco-cal { font-size: 34px; margin-bottom: 8px; }
+.connexion .sous { margin-top: 8px; font-size: 15px; opacity: .9; }
+.connexion .corps { display: grid; gap: 12px; padding: 22px 22px 18px; }
+.connexion label { font-size: 13px; font-weight: 600; color: #4C5868; display: grid; gap: 5px; }
+.connexion input { background: var(--field); border: 1.5px solid var(--line); color: var(--fg); font: inherit; padding: 12px 13px; border-radius: 12px; }
+.connexion input:focus { outline: none; border-color: var(--bleu); }
+.connexion .go { background: var(--tomato); color: #fff; border: none; border-radius: 12px; padding: 13px; font: 600 18px var(--display); cursor: pointer; }
+.connexion .msg { min-height: 20px; font-size: 14px; color: var(--tomato); text-align: center; }
+.connexion .msg.ok { color: var(--bleu); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 30; width: max-content; max-width: min(560px, calc(100vw - 32px)); background: #1F2733; color: #fff; font: 600 14px/1.4 var(--font); padding: 10px 16px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.toast.alerte { background: var(--tomato); }
+.toast.rappel { background: var(--bleu); font-size: 15px; }
+.titre-impr { display: none; }
+@media (max-width: 640px) {
+  h1 { font-size: 18px; }
+  header { gap: 5px; padding: 8px; }
+  .btn-menu { width: 34px; height: 36px; font-size: 18px; }
+  .btn-auj { height: 36px; padding: 0 8px; font-size: 14px; }
+  .btn-auj .long { display: none; } .btn-auj .court { display: inline; }
+  .etat { display: none; }
+  .case { min-height: 72px; padding: 2px 1px; }
+  .ev { font-size: 10.5px; padding: 0 2px; border-left-width: 2px; }
+  .ligne { grid-template-columns: 82px 1fr; padding: 8px 10px; }
+  .onglets button { padding: 7px 9px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media print {
+  body { background: #fff; padding: 0; }
+  header, .barre, .fab, #tiroir, #voile, .toast, .liste-nav, .ajout-jour, .bandeau-info { display: none !important; }
+  .titre-impr { display: block; font: 600 20px var(--display); margin: 0 0 8px; }
+  .defile { max-height: none; overflow: visible; }
+  .mois, .grille-sem, .liste { border-radius: 0; }
+  .ev, .blk, .ligne .pt { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .case { min-height: 90px; }
+}
+</style>
+</head>
+<body>
+
+<form class="connexion" id="ecran-connexion" hidden autocomplete="on">
+  <div class="haut">
+    <div class="deco-cal" aria-hidden="true">📅</div>
+    <h1>Agenda</h1>
+    <div class="sous">Ton agenda, sur le téléphone et le PC</div>
+  </div>
+  <div class="corps">
+    <label>E-mail<input id="email" type="email" autocomplete="username" required></label>
+    <label>Mot de passe<input id="mdp" type="password" autocomplete="current-password" required></label>
+    <button class="go" type="submit">Se connecter</button>
+    <button class="lien" type="button" id="oubli">Mot de passe oublié ?</button>
+    <div class="msg" id="msg-connexion" role="status"></div>
+  </div>
+</form>
+
+<div id="app" hidden>
+<div id="voile" hidden></div>
+<nav id="tiroir" aria-label="Menu" hidden>
+  <div class="tiroir-tete"><span class="tiroir-titre">Agenda</span><button class="fermer-tiroir" id="fermer-tiroir" type="button" aria-label="Fermer le menu">×</button></div>
+  <div class="tiroir-label">Affichage</div>
+  <button class="tiroir-item" data-vue="mois" type="button"><span class="ic">🗓️</span>Mois</button>
+  <button class="tiroir-item" data-vue="semaine" type="button"><span class="ic">📆</span>Semaine</button>
+  <button class="tiroir-item" data-vue="jour" type="button"><span class="ic">🕘</span>Jour</button>
+  <button class="tiroir-item" data-vue="liste" type="button"><span class="ic">📋</span>Liste</button>
+  <div class="tiroir-sep"></div>
+  <div class="tiroir-label">Catégories affichées</div>
+  <div id="filtres"></div>
+  <div class="tiroir-sep"></div>
+  <button class="tiroir-item" id="imprimer" type="button"><span class="ic">🖨️</span>Imprimer la vue</button>
+  <button class="tiroir-item" data-vue="reglages" type="button"><span class="ic">⚙️</span>Réglages</button>
+  <button class="tiroir-item" data-vue="sauvegarde" type="button"><span class="ic">💾</span>Sauvegarde</button>
+  <div class="tiroir-pied">Agenda <span id="version"></span> — JLApplis<br><button class="deco" id="deco" type="button">Se déconnecter</button>
+    <div class="deco-confirme" id="deco-confirme" hidden><span>Se déconnecter ? Pour te reconnecter, il faudra du réseau.</span><span class="deco-btns"><button class="btn" id="deco-non" type="button">Annuler</button><button class="btn dang" id="deco-oui" type="button">Se déconnecter</button></span></div></div>
+</nav>
+
+<div class="page">
+  <header>
+    <button class="btn-menu" id="btn-menu" type="button" aria-label="Ouvrir le menu">☰</button>
+    <button class="btn-menu" id="prec" type="button" aria-label="Période précédente">‹</button>
+    <button class="btn-menu" id="suiv" type="button" aria-label="Période suivante">›</button>
+    <h1 id="titre">Agenda</h1>
+    <button class="btn-auj" id="auj" type="button" title="Aujourd'hui"><span class="long">Aujourd'hui</span><span class="court">Auj.</span></button>
+    <span class="etat" id="etat">Chargement…</span>
+    <button class="btn-menu" id="btn-sauv" type="button" title="Sauvegarder" aria-label="Sauvegarder">💾<span class="pastille" id="pastille-sauv" hidden></span></button>
+  </header>
+  <div class="barre" id="barre">
+    <div class="onglets" role="tablist">
+      <button type="button" data-vue="mois">Mois</button>
+      <button type="button" data-vue="semaine">Semaine</button>
+      <button type="button" data-vue="jour">Jour</button>
+      <button type="button" data-vue="liste">Liste</button>
+    </div>
+    <input type="search" class="recherche" id="rech" placeholder="Rechercher…" aria-label="Rechercher un événement">
+  </div>
+  <div class="titre-impr" id="titre-impr"></div>
+  <div class="bandeau-info" id="bandeau-vide" hidden>Ton agenda est vide. Pour reprendre tes données Google Agenda : menu ☰ ▸ <b>Sauvegarde</b> ▸ <b>Restaurer</b>, puis choisis le fichier « AGENDA_reprise_Google… ». <button class="lien" id="aller-reprise" type="button">Y aller</button></div>
+  <main id="zone"></main>
+
+  <section id="vue-reglages" hidden>
+    <div class="bloc-s"><h3>🏷️ Catégories</h3>
+      <p class="note">Le nom et la couleur se modifient directement. Les catégories reprises de Google portent le nom de leur couleur : renomme-les à ta façon (Santé, CS, Famille…).</p>
+      <div id="liste-cats"></div>
+      <div class="btns"><button class="btn" id="cat-ajout" type="button">＋ Nouvelle catégorie</button><button class="btn prim" id="cat-enr" type="button">Enregistrer les catégories</button></div>
+    </div>
+    <div class="bloc-s"><h3>🔔 Rappels</h3>
+      <p class="note">Les rappels s'affichent seulement quand l'agenda est ouvert (dans un onglet ou en appli sur le téléphone). Ils s'affichent aussi en notification si tu l'autorises.</p>
+      <div class="reg-ligne"><span>Rappel par défaut (événements avec heure) :</span><select id="rap-def"></select></div>
+      <div class="reg-ligne"><span>Rappel par défaut (journées entières) :</span><select id="rap-def-j"></select></div>
+      <div class="btns"><button class="btn prim" id="rap-enr" type="button">Enregistrer</button><button class="btn" id="notif" type="button">🔔 Autoriser les notifications</button></div>
+      <p class="note" id="notif-etat"></p>
+    </div>
+    <div class="sauv-msg" id="reg-msg" role="status"></div>
+  </section>
+
+  <section id="vue-sauvegarde" hidden>
+    <div class="bloc-s"><h3>Contenu</h3><p id="sauv-contenu"></p><p class="note">Dernière sauvegarde (tous appareils) : <b id="sauv-derniere"></b></p></div>
+    <div class="bloc-s"><h3>💾 Sauvegarder</h3>
+      <p class="note">Crée un fichier JSON daté avec tous tes événements, tes séries répétées et tes catégories. Il faut du réseau.</p>
+      <p class="note">Dossier de sauvegarde : <b id="fs-nom">…</b></p>
+      <div class="btns"><button class="btn prim" id="sauv-go" type="button">💾 Sauvegarder maintenant</button><button class="lien" id="fs-choisir" type="button" hidden>📁 Choisir le dossier…</button><button class="lien rouge" id="fs-oublier" type="button" hidden>Retirer le dossier</button></div>
+      <p class="note" id="fs-aide"></p>
+    </div>
+    <div class="bloc-s"><h3>↩️ Restaurer</h3>
+      <p class="note">Remplace <b>toutes</b> les données actuelles par celles d'un fichier AGENDA (une sauvegarde, ou le fichier de reprise Google). Juste avant, l'état actuel est sauvegardé automatiquement (fichier « AGENDA_avant_restauration_… »). Il faut du réseau.</p>
+      <div class="btns"><button class="btn" id="rest-choisir" type="button">📂 Choisir un fichier…</button></div>
+      <div class="confirme" id="rest-confirme" hidden><span id="rest-txt"></span><button class="btn" id="rest-non" type="button">Annuler</button><button class="btn dang" id="rest-oui" type="button">Tout remplacer</button></div>
+      <input type="file" id="file-json" accept=".json,application/json" hidden>
+    </div>
+    <div class="sauv-msg" id="sauv-msg" role="status"></div>
+  </section>
+</div>
+<button class="fab" id="fab" type="button" aria-label="Nouvel événement" title="Nouvel événement">+</button>
+</div>
+
+<div id="voile-dlg" hidden><div id="dlg" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="module">
+/*
+    Agenda — agenda personnel (JLApplis)
+    Copyright (C) 2026 Jluc — JLApplis — Licence GPL v3 (voir LICENSE.txt)
+*/
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const VERSION = "1.0";
+
+/* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDvz52I6Qcv5dWRCo_vQ9OjB9kvmVYQwog",
+  authDomain: "courses-e9163.firebaseapp.com",
+  projectId: "courses-e9163",
+  storageBucket: "courses-e9163.firebasestorage.app",
+  messagingSenderId: "684441703323",
+  appId: "1:684441703323:web:ebe67718a4265ff08e073e"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+// cache local : l'agenda s'affiche et se modifie même sans réseau, puis se synchronise
+const db = initializeFirestore(app, { localCache: persistentLocalCache() });
+
+/* Données Firestore (toutes sous users/{uid}/, protégées par les règles de COURSES) :
+   - agenda_annees/{AAAA} : { ev: { id: événement } } — un document par année de début (peu de lectures)
+   - agenda_meta/reglages : { categories: [{id, nom, couleur}], rappelDefaut, rappelDefautJournee }
+   - agenda_meta/sauvegarde : { modifs, derniereSauvegarde } — compteur partagé entre appareils
+   Événement : t titre, s début, e fin ("AAAA-MM-JJ" journée entière, fin exclue ; sinon "AAAA-MM-JJTHH:MM"), a journée entière,
+   l lieu, d description, cat catégorie, rap [minutes avant le début], rr répétition {f:"D"|"W"|"M"|"Y", i, j:[0=lun…6=dim], u:"AAAA-MM-JJ", n},
+   ex [occurrences retirées], serie + occ (occurrence modifiée d'une série), inv participants, prov provisoire, src, gid. */
+
+const $ = (id) => document.getElementById(id);
+$("version").textContent = VERSION;
+let UID = null, EV = {}, ANNEES = [], REG = { categories: [], rappelDefaut: null, rappelDefautJournee: null };
+let desabonner = [], CHARGE = false, MODIFS = 0, DERNIERE_SAUV = "";
+let VUE = "mois", REF = new Date();
+try { const v = localStorage.getItem("agenda_vue"); if (["mois", "semaine", "jour", "liste"].includes(v)) VUE = v; else if (window.innerWidth < 640) VUE = "liste"; } catch (e) { /* sans gravité */ }
+let CACHES = new Set();
+try { CACHES = new Set(JSON.parse(localStorage.getItem("agenda_caches") || "[]")); } catch (e) { /* sans gravité */ }
+
+const colAnnees = () => collection(db, "users", UID, "agenda_annees");
+const refAn = (an) => doc(db, "users", UID, "agenda_annees", String(an));
+const refReg = () => doc(db, "users", UID, "agenda_meta", "reglages");
+const refSauv = () => doc(db, "users", UID, "agenda_meta", "sauvegarde");
+
+function etat(msg, alerte) { const e = $("etat"); e.textContent = msg || ""; e.classList.toggle("alerte", !!alerte); }
+function erreur(e) { console.error(e); etat("Enregistrement impossible, réessaie", true); toast("Enregistrement impossible : " + ((e && e.code) || (e && e.message) || e), true); }
+
+/* ---------- dates ---------- */
+const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+const MOIS_C = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const JOURS = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."];
+const JOURS_L = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+const p2 = (n) => String(n).padStart(2, "0");
+const ymd = (d) => d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+const hm = (d) => p2(d.getHours()) + ":" + p2(d.getMinutes());
+const cleLoc = (d, a) => a ? ymd(d) : ymd(d) + "T" + hm(d);
+function parseLoc(s) {
+  const a = +s.slice(0, 4), m = +s.slice(5, 7), j = +s.slice(8, 10);
+  return s.length > 10 ? new Date(a, m - 1, j, +s.slice(11, 13), +s.slice(14, 16)) : new Date(a, m - 1, j);
+}
+const AJ = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, d.getHours(), d.getMinutes());
+const jourDe = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const lundi = (d) => AJ(jourDe(d), -((d.getDay() + 6) % 7));
+const jsem = (d) => (d.getDay() + 6) % 7;
+const nbJours = (a, b) => Math.round((jourDe(b) - jourDe(a)) / 864e5);
+const dateLongue = (d) => JOURS_L[jsem(d)] + " " + d.getDate() + " " + MOIS[d.getMonth()] + " " + d.getFullYear();
+const dateCourte = (d) => JOURS[jsem(d)] + " " + d.getDate() + " " + MOIS_C[d.getMonth()];
+
+/* ---------- répétitions ---------- */
+// renvoie les débuts (Date) des occurrences qui recouvrent [de, a[
+function occurrences(ev, de, a) {
+  const d0 = parseLoc(ev.s), res = [];
+  const dur = ev.a ? nbJours(d0, parseLoc(ev.e)) : parseLoc(ev.e) - d0;
+  const recouvre = (d) => { const f = ev.a ? AJ(d, Math.max(dur, 1)) : new Date(d.getTime() + Math.max(dur, 60000)); return d < a && f > de; };
+  const rr = ev.rr;
+  if (!rr) { if (recouvre(d0)) res.push(d0); return res; }
+  const ex = new Set(ev.ex || []), fin = rr.u ? parseLoc(rr.u + "T23:59") : null, max = rr.n || Infinity, i = Math.max(1, rr.i || 1);
+  let cpt = 0;
+  const marge = ev.a ? AJ(de, -Math.max(dur, 1)) : new Date(de.getTime() - Math.max(dur, 60000));
+  const garder = (d) => { cpt++; if (!ex.has(cleLoc(d, ev.a)) && recouvre(d)) res.push(d); };
+  const stop = (d) => (fin && d > fin) || cpt >= max || d >= a;
+  if (rr.f === "W") {
+    const jours = (rr.j && rr.j.length ? rr.j : [jsem(d0)]).slice().sort((x, y) => x - y);
+    let sem = lundi(d0);
+    // saut rapide jusqu'à la fenêtre (seulement sans limite de nombre)
+    if (max === Infinity && marge > d0) { const k = Math.floor(nbJours(sem, marge) / (7 * i)) - 1; if (k > 0) sem = AJ(sem, 7 * i * k); }
+    for (let k = 0; k < 6000; k++) {
+      for (const j of jours) {
+        const d = new Date(sem.getFullYear(), sem.getMonth(), sem.getDate() + j, d0.getHours(), d0.getMinutes());
+        if (d < d0) continue;
+        if (stop(d)) return res;
+        garder(d);
+      }
+      sem = AJ(sem, 7 * i);
+    }
+    return res;
+  }
+  let k0 = 0;
+  if (max === Infinity && marge > d0) {   // saut rapide jusqu'à la fenêtre
+    if (rr.f === "D") k0 = Math.max(0, Math.floor(nbJours(d0, marge) / i) - 1);
+    else if (rr.f === "M") k0 = Math.max(0, Math.floor(((marge.getFullYear() - d0.getFullYear()) * 12 + marge.getMonth() - d0.getMonth()) / i) - 1);
+    else k0 = Math.max(0, Math.floor((marge.getFullYear() - d0.getFullYear()) / i) - 1);
+  }
+  for (let k = k0; k < k0 + 40000; k++) {
+    let d;
+    if (rr.f === "D") d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + k * i, d0.getHours(), d0.getMinutes());
+    else if (rr.f === "M") { d = new Date(d0.getFullYear(), d0.getMonth() + k * i, d0.getDate(), d0.getHours(), d0.getMinutes()); if (d.getDate() !== d0.getDate()) { if (stop(d)) return res; continue; } }
+    else { d = new Date(d0.getFullYear() + k * i, d0.getMonth(), d0.getDate(), d0.getHours(), d0.getMinutes()); if (d.getMonth() !== d0.getMonth()) { if (stop(d)) return res; continue; } }
+    if (stop(d)) return res;
+    garder(d);
+  }
+  return res;
+}
+const catDe = (ev) => (REG.categories.find((c) => c.id === ev.cat) || null);
+const couleurDe = (ev) => { const c = catDe(ev); return c ? c.couleur : "#1A5FB4"; };
+const visible = (ev) => !CACHES.has(catDe(ev) ? ev.cat : "");
+function texteSur(hex) { const h = (hex || "#1A5FB4").replace("#", ""); const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.299 * r + 0.587 * g + 0.114 * b) > 165 ? "#1F2733" : "#FFFFFF"; }
+// instances (occurrences affichables) entre deux dates
+function instances(de, a, filtre) {
+  const out = [];
+  for (const ev of Object.values(EV)) {
+    if (!visible(ev) || (filtre && !filtre(ev))) continue;
+    const d0 = parseLoc(ev.s), dur = ev.a ? nbJours(d0, parseLoc(ev.e)) : parseLoc(ev.e) - d0;
+    for (const d of occurrences(ev, de, a)) {
+      const f = ev.a ? AJ(d, Math.max(dur, 1)) : new Date(d.getTime() + dur);
+      out.push({ ev, id: ev.id, s: cleLoc(d, ev.a), e: cleLoc(f, ev.a), occ: ev.rr ? cleLoc(d, ev.a) : null, d, f });
+    }
+  }
+  return out.sort((x, y) => (y.ev.a - x.ev.a) || (x.d - y.d) || x.ev.t.localeCompare(y.ev.t));
+}
+const duJour = (l, jour) => { const de = jourDe(jour), a = AJ(de, 1); return l.filter((x) => x.d < a && (x.ev.a ? x.f > de : (x.f > de || +x.d === +de))); };
+
+/* ---------- connexion ---------- */
+$("ecran-connexion").addEventListener("submit", (e) => {
+  e.preventDefault(); const m = $("msg-connexion"); m.className = "msg"; m.textContent = "Connexion…";
+  signInWithEmailAndPassword(auth, $("email").value.trim(), $("mdp").value)
+    .then(() => { m.textContent = ""; })
+    .catch((err) => { m.textContent = (!navigator.onLine || err.code === "auth/network-request-failed") ? "Pas de réseau : la connexion a besoin d'internet." : /invalid-credential|wrong-password|user-not-found|invalid-email/.test(err.code) ? "E-mail ou mot de passe incorrect." : "Connexion impossible (" + err.code + ")."; });
+});
+$("oubli").addEventListener("click", () => {
+  const m = $("msg-connexion"), mail = $("email").value.trim();
+  if (!mail) { m.className = "msg"; m.textContent = "Indique d'abord ton e-mail."; return; }
+  sendPasswordResetEmail(auth, mail).then(() => { m.className = "msg ok"; m.textContent = "E-mail de réinitialisation envoyé."; })
+    .catch((err) => { m.className = "msg"; m.textContent = "Envoi impossible (" + err.code + ")."; });
+});
+$("deco").addEventListener("click", () => { $("deco-confirme").hidden = false; $("deco").hidden = true; });
+$("deco-non").addEventListener("click", () => { $("deco-confirme").hidden = true; $("deco").hidden = false; });
+$("deco-oui").addEventListener("click", () => { $("deco-confirme").hidden = true; $("deco").hidden = false; signOut(auth); });
+
+onAuthStateChanged(auth, (u) => {
+  desabonner.forEach((f) => f()); desabonner = [];
+  EV = {}; ANNEES = []; CHARGE = false; MODIFS = 0; DERNIERE_SAUV = "";
+  UID = u ? u.uid : null;
+  $("ecran-connexion").hidden = !!u; $("app").hidden = !u; majBoutonSauv();
+  if (!u) return;
+  etat("Chargement…");
+  const minuteur = setTimeout(() => { if (!CHARGE) etat("Hors ligne — envoi au retour du réseau", true); }, 10000);
+  desabonner.push(() => clearTimeout(minuteur));
+  desabonner.push(onSnapshot(colAnnees(), { includeMetadataChanges: true }, (snap) => {
+    const nv = {}; ANNEES = [];
+    snap.docs.forEach((d) => {
+      ANNEES.push(d.id);
+      const m = (d.data() || {}).ev || {};
+      Object.keys(m).forEach((id) => { if (m[id] && typeof m[id].s === "string" && typeof m[id].e === "string") nv[id] = { ...m[id], t: String(m[id].t || "(sans titre)"), id, an: d.id }; });
+    });
+    EV = nv;
+    if (!snap.metadata.fromCache) { CHARGE = true; clearTimeout(minuteur); }
+    etat(snap.metadata.hasPendingWrites ? "Enregistrement…" : snap.metadata.fromCache ? "Hors ligne" : "À jour", snap.metadata.fromCache && !snap.metadata.hasPendingWrites && !CHARGE);
+    $("bandeau-vide").hidden = !(CHARGE && !Object.keys(EV).length);
+    rendre();
+  }, (err) => etat("Agenda injoignable (" + err.code + ")", true)));
+  desabonner.push(onSnapshot(refReg(), (s) => {
+    const x = s.exists() ? s.data() : {};
+    REG = { categories: Array.isArray(x.categories) ? x.categories.filter((c) => c && c.id) : [], rappelDefaut: Number.isFinite(x.rappelDefaut) ? x.rappelDefaut : null, rappelDefautJournee: Number.isFinite(x.rappelDefautJournee) ? x.rappelDefautJournee : null };
+    rendreFiltres(); rendre(); if (VUE === "reglages" && !REG_SALE) rendreReglages();
+  }, () => { /* réglages indisponibles : l'agenda fonctionne quand même */ }));
+  desabonner.push(onSnapshot(refSauv(), (snap) => {
+    const x = snap.exists() ? snap.data() : {};
+    MODIFS = Math.max(0, Number(x.modifs) || 0); DERNIERE_SAUV = typeof x.derniereSauvegarde === "string" ? x.derniereSauvegarde : "";
+    majBoutonSauv(); if (VUE === "sauvegarde") rendreSauvegarde();
+  }, () => { /* compteur indisponible */ }));
+  montrer(VUE);
+});
+
+/* ---------- écritures ---------- */
+function marquerModif(n) {
+  if (!UID) return; MODIFS += n; majBoutonSauv();
+  setDoc(refSauv(), { modifs: increment(n) }, { merge: true }).catch(() => { /* compteur seulement */ });
+}
+const anDe = (data) => data.s.slice(0, 4);
+// ops : [[id, données | null]] — tout part dans un seul lot (marche aussi hors ligne)
+function appliquer(ops) {
+  if (!UID || !ops.length) return Promise.resolve();
+  const b = writeBatch(db), vus = new Set();
+  ops.forEach(([id, data]) => {
+    const ancien = EV[id];
+    if (!data) { if (ancien) { b.update(refAn(ancien.an), new FieldPath("ev", id), deleteField()); delete EV[id]; } return; }
+    const propre = nettoyer(data); delete propre.id; delete propre.an;
+    propre.modifieLe = Date.now();
+    const an = anDe(propre);
+    if (ancien && ancien.an !== an) b.update(refAn(ancien.an), new FieldPath("ev", id), deleteField());
+    if (!vus.has(an)) { b.set(refAn(an), { maj: Date.now() }, { merge: true }); vus.add(an); }
+    b.update(refAn(an), new FieldPath("ev", id), propre);
+    EV[id] = { ...propre, id, an };
+  });
+  rendre();
+  const p = b.commit(); marquerModif(ops.length);
+  return p.catch(erreur);
+}
+// retire les valeurs vides (Firestore refuse « undefined », même à l'intérieur d'un objet)
+function nettoyer(o) {
+  const r = {};
+  Object.keys(o).forEach((k) => { const v = o[k]; if (v === undefined || v === null || v === "") return; r[k] = objet(v) ? nettoyer(v) : v; });
+  return r;
+}
+const nouvelId = () => "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* ---------- menu et vues ---------- */
+function ouvrirTiroir(o) { $("tiroir").hidden = !o; $("voile").hidden = !o; }
+$("btn-menu").addEventListener("click", () => ouvrirTiroir(true));
+$("fermer-tiroir").addEventListener("click", () => ouvrirTiroir(false));
+$("voile").addEventListener("click", () => ouvrirTiroir(false));
+document.querySelectorAll("[data-vue]").forEach((b) => b.addEventListener("click", () => montrer(b.dataset.vue)));
+function montrer(v) {
+  if (v !== "reglages") REG_SALE = false;
+  VUE = v; if (["mois", "semaine", "jour", "liste"].includes(v)) { try { localStorage.setItem("agenda_vue", v); } catch (e) { /* sans gravité */ } }
+  ouvrirTiroir(false);
+  const cal = ["mois", "semaine", "jour", "liste"].includes(v);
+  $("zone").hidden = !cal; $("barre").hidden = !cal; $("fab").hidden = !cal;
+  ["prec", "suiv", "auj"].forEach((id) => { $(id).hidden = !cal; });
+  $("vue-reglages").hidden = v !== "reglages"; $("vue-sauvegarde").hidden = v !== "sauvegarde";
+  document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === v));
+  if (v === "reglages") { $("titre").textContent = "Réglages"; rendreReglages(); }
+  if (v === "sauvegarde") { $("titre").textContent = "Sauvegarde"; $("sauv-msg").textContent = ""; rendreSauvegarde(); }
+  window.scrollTo(0, 0); rendre();
+}
+function rendreFiltres() {
+  const cats = [...REG.categories, { id: "", nom: "Sans catégorie", couleur: "#1A5FB4" }];
+  $("filtres").replaceChildren(...cats.map((c) => {
+    const l = document.createElement("label"); l.className = "filtre";
+    const i = document.createElement("input"); i.type = "checkbox"; i.checked = !CACHES.has(c.id);
+    i.addEventListener("change", () => { if (i.checked) CACHES.delete(c.id); else CACHES.add(c.id); try { localStorage.setItem("agenda_caches", JSON.stringify([...CACHES])); } catch (e) { /* sans gravité */ } rendre(); });
+    const p = document.createElement("span"); p.className = "pt"; p.style.background = c.couleur;
+    const n = document.createElement("span"); n.textContent = c.nom || "Sans nom";
+    l.append(i, p, n); return l;
+  }));
+}
+$("prec").addEventListener("click", () => decaler(-1));
+$("suiv").addEventListener("click", () => decaler(1));
+$("auj").addEventListener("click", () => { REF = new Date(); rendre(); defilerMaintenant(); });
+function decaler(s) {
+  if (VUE === "mois" || VUE === "liste") REF = new Date(REF.getFullYear(), REF.getMonth() + s, 1);
+  else if (VUE === "semaine") REF = AJ(REF, 7 * s); else REF = AJ(REF, s);
+  rendre();
+}
+$("rech").addEventListener("input", () => { if (VUE !== "liste" && $("rech").value.trim()) { VUE = "liste"; document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === "liste")); } rendre(); });
+$("fab").addEventListener("click", () => formulaire(null, { jour: VUE === "jour" || VUE === "semaine" ? (ymd(REF) === ymd(new Date()) || VUE === "jour" ? ymd(REF) : ymd(lundi(REF))) : ymd(new Date()) }));
+$("imprimer").addEventListener("click", () => { ouvrirTiroir(false); if (!["mois", "semaine", "jour", "liste"].includes(VUE)) montrer("mois"); setTimeout(() => window.print(), 100); });
+$("aller-reprise").addEventListener("click", () => montrer("sauvegarde"));
+
+function rendre() {
+  if (!UID || !["mois", "semaine", "jour", "liste"].includes(VUE)) return;
+  if (VUE === "mois") vueMois(); else if (VUE === "liste") vueListe(); else vueSemaine(VUE === "jour" ? 1 : 7);
+  $("titre-impr").textContent = $("titre").textContent;
+}
+function puce(x, jour) {
+  const s = document.createElement("span"); s.className = "ev" + (x.ev.a ? " jour" : ""); s.dataset.i = idInst(x);
+  const c = couleurDe(x.ev);
+  if (x.ev.a) { s.style.background = c; s.style.color = texteSur(c); } else { s.style.borderLeftColor = c; }
+  const debutIci = x.s.slice(0, 10) === ymd(jour);
+  s.textContent = (x.ev.a ? "" : (debutIci ? x.s.slice(11) + " " : "… ")) + x.ev.t;
+  s.title = x.ev.t; return s;
+}
+let INST = {};   // instances affichées, par clé
+const idInst = (x) => { const k = x.id + "|" + (x.occ || ""); INST[k] = x; return k; };
+function vueMois() {
+  INST = {};
+  const an = REF.getFullYear(), m = REF.getMonth();
+  $("titre").textContent = MOIS[m] + " " + an;
+  const deb = lundi(new Date(an, m, 1)), aujS = ymd(new Date());
+  const nbSem = Math.ceil((nbJours(deb, new Date(an, m + 1, 1))) / 7);
+  const l = instances(deb, AJ(deb, 7 * nbSem));
+  const g = document.createElement("div"); g.className = "mois";
+  JOURS.forEach((j) => { const d = document.createElement("div"); d.className = "jn"; d.textContent = j; g.appendChild(d); });
+  const max = window.innerWidth < 640 ? 3 : 4;
+  for (let i = 0; i < 7 * nbSem; i++) {
+    const d = AJ(deb, i), c = document.createElement("div");
+    c.className = "case" + (d.getMonth() !== m ? " hors" : "") + (ymd(d) === aujS ? " auj" : ""); c.dataset.j = ymd(d);
+    const n = document.createElement("div"); n.className = "num";
+    const sp = document.createElement("span"); sp.textContent = d.getDate();
+    const pl = document.createElement("span"); pl.className = "ajout-jour"; pl.textContent = "+"; pl.dataset.nj = ymd(d); pl.title = "Ajouter un événement ce jour";
+    n.append(sp, pl); c.appendChild(n);
+    const ev = duJour(l, d);
+    ev.slice(0, max).forEach((x) => c.appendChild(puce(x, d)));
+    if (ev.length > max) { const p = document.createElement("div"); p.className = "plus"; p.textContent = "+ " + (ev.length - max) + " autre" + (ev.length - max > 1 ? "s" : ""); c.appendChild(p); }
+    g.appendChild(c);
+  }
+  $("zone").replaceChildren(g);
+}
+const H_PX = 44;
+function vueSemaine(n) {
+  INST = {};
+  const deb = n === 7 ? lundi(REF) : jourDe(REF), fin = AJ(deb, n - 1), aujS = ymd(new Date());
+  $("titre").textContent = n === 1 ? dateLongue(deb) : (deb.getMonth() === fin.getMonth() ? deb.getDate() + " – " + fin.getDate() + " " + MOIS[fin.getMonth()] + " " + fin.getFullYear() : deb.getDate() + " " + MOIS_C[deb.getMonth()] + " – " + fin.getDate() + " " + MOIS_C[fin.getMonth()] + " " + fin.getFullYear());
+  const l = instances(deb, AJ(deb, n));
+  const g = document.createElement("div"); g.className = "grille-sem"; g.style.setProperty("--n", n);
+  const tete = document.createElement("div"); tete.className = "sem-tete"; tete.appendChild(document.createElement("div"));
+  const jr = document.createElement("div"); jr.className = "sem-jour";
+  const lj = document.createElement("div"); lj.textContent = "Journée"; jr.appendChild(lj);
+  for (let i = 0; i < n; i++) {
+    const d = AJ(deb, i), t = document.createElement("div");
+    t.className = ymd(d) === aujS ? "auj" : ""; t.dataset.jv = ymd(d);
+    t.innerHTML = JOURS[jsem(d)] + "<b>" + d.getDate() + "</b>"; tete.appendChild(t);
+    const c = document.createElement("div"); duJour(l, d).filter((x) => x.ev.a).forEach((x) => c.appendChild(puce(x, d))); jr.appendChild(c);
+  }
+  const df = document.createElement("div"); df.className = "defile"; df.id = "defile";
+  const corps = document.createElement("div"); corps.className = "sem-corps"; corps.style.setProperty("--n", n);
+  const hs = document.createElement("div"); hs.className = "heures";
+  for (let h = 0; h < 24; h++) { const x = document.createElement("div"); x.textContent = h ? p2(h) + ":00" : ""; hs.appendChild(x); }
+  corps.appendChild(hs);
+  for (let i = 0; i < n; i++) {
+    const d = AJ(deb, i), col = document.createElement("div"); col.className = "col" + (ymd(d) === aujS ? " auj" : ""); col.dataset.cj = ymd(d);
+    for (let h = 0; h < 24; h++) { const x = document.createElement("div"); x.className = "h"; col.appendChild(x); }
+    const evs = duJour(l, d).filter((x) => !x.ev.a), cols = [], place = [];
+    evs.forEach((x) => {
+      let a = x.d < d ? 0 : x.d.getHours() + x.d.getMinutes() / 60;
+      let b = x.f >= AJ(d, 1) ? 24 : x.f.getHours() + x.f.getMinutes() / 60;
+      b = Math.min(Math.max(b, a + 0.4), 24);
+      let c = cols.findIndex((fin) => fin <= a + 0.001); if (c < 0) { c = cols.length; cols.push(b); } else cols[c] = b;
+      place.push({ x, a, b, c });
+    });
+    // largeur : nombre de colonnes utilisées par le groupe d'événements qui se chevauchent
+    place.forEach((p) => {
+      const nb = Math.max(1, ...place.filter((q) => q.a < p.b && q.b > p.a).map((q) => q.c + 1));
+      const k = document.createElement("div"); k.className = "blk"; k.dataset.i = idInst(p.x);
+      const coul = couleurDe(p.x.ev); k.style.background = coul; k.style.color = texteSur(coul);
+      k.style.top = (p.a * H_PX) + "px"; k.style.height = ((p.b - p.a) * H_PX - 2) + "px";
+      k.style.left = "calc(" + (p.c * 100 / nb) + "% + 1px)"; k.style.width = "calc(" + (100 / nb) + "% - 2px)";
+      const b = document.createElement("b"); b.textContent = p.x.ev.t; k.appendChild(b);
+      k.appendChild(document.createTextNode(p.x.s.slice(11) + " – " + p.x.e.slice(11) + (p.x.ev.l ? " · " + p.x.ev.l : "")));
+      k.title = p.x.ev.t; col.appendChild(k);
+    });
+    if (ymd(d) === aujS) { const now = new Date(), m = document.createElement("div"); m.className = "maintenant"; m.style.top = ((now.getHours() + now.getMinutes() / 60) * H_PX) + "px"; col.appendChild(m); }
+    corps.appendChild(col);
+  }
+  df.appendChild(corps); g.append(tete, jr, df);
+  const garde = $("defile") ? $("defile").scrollTop : null;
+  $("zone").replaceChildren(g);
+  $("defile").scrollTop = garde !== null && garde > 0 ? garde : 7 * H_PX;
+}
+function defilerMaintenant() { const d = $("defile"); if (d) d.scrollTop = Math.max(0, (new Date().getHours() - 1) * H_PX); }
+function vueListe() {
+  INST = {};
+  const q = norm($("rech").value);
+  let de, a;
+  if (q) { de = new Date(2000, 0, 1); a = AJ(new Date(), 3 * 366); $("titre").textContent = "Recherche"; }
+  else { de = new Date(REF.getFullYear(), REF.getMonth(), 1); a = new Date(REF.getFullYear(), REF.getMonth() + 3, 1); const dm = AJ(a, -1), court = (d) => MOIS_C[d.getMonth()]; $("titre").textContent = court(de) + (de.getFullYear() !== dm.getFullYear() ? " " + de.getFullYear() : "") + " – " + court(dm) + " " + dm.getFullYear(); }
+  const l = instances(de, a, q ? (ev) => norm(ev.t + " " + (ev.l || "") + " " + (ev.d || "")).includes(q) : null).sort((x, y) => (x.d - y.d) || (y.ev.a - x.ev.a));
+  const z = document.createElement("div"); z.className = "liste";
+  const maint = new Date(), aujS = ymd(maint);
+  let jc = "", premier = null;
+  if (!l.length) { const v = document.createElement("div"); v.className = "vide"; v.textContent = q ? "Aucun événement trouvé." : "Aucun événement sur cette période."; z.appendChild(v); }
+  l.forEach((x) => {
+    const j = q ? x.s.slice(0, 10) : (x.d < de ? ymd(de) : x.s.slice(0, 10));
+    if (j !== jc) {
+      jc = j; const t = document.createElement("div"); t.className = "jt" + (j === aujS ? " auj" : ""); t.textContent = dateLongue(parseLoc(j)) + (j === aujS ? " — aujourd'hui" : "");
+      if (!premier && j >= aujS) { premier = t; }
+      z.appendChild(t);
+    }
+    const li = document.createElement("div"); li.className = "ligne" + (x.f <= maint ? " passe" : ""); li.dataset.i = idInst(x);
+    const h = document.createElement("div");
+    h.textContent = x.ev.a ? (nbJours(x.d, x.f) > 1 ? "Jusqu'au " + AJ(x.f, -1).getDate() + "/" + p2(AJ(x.f, -1).getMonth() + 1) : "Journée") : x.s.slice(11) + " – " + x.e.slice(11);
+    const c = document.createElement("div");
+    const pt = document.createElement("span"); pt.className = "pt"; pt.style.background = couleurDe(x.ev);
+    const b = document.createElement("b"); b.textContent = x.ev.t;
+    c.append(pt, b);
+    if (x.ev.rr || x.ev.serie) c.append(" 🔁");
+    if (x.ev.l) { const lc = document.createElement("div"); lc.className = "lieu"; lc.textContent = "📍 " + x.ev.l; c.appendChild(lc); }
+    li.append(h, c); z.appendChild(li);
+  });
+  $("zone").replaceChildren(z);
+  if (premier && (q || (REF.getFullYear() === maint.getFullYear() && REF.getMonth() === maint.getMonth()))) premier.scrollIntoView({ block: "start" });
+}
+const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+$("zone").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-i]"); if (t) { detail(INST[t.dataset.i]); return; }
+  const nj = e.target.closest("[data-nj]"); if (nj) { formulaire(null, { jour: nj.dataset.nj }); return; }
+  const jv = e.target.closest("[data-jv]"); if (jv) { REF = parseLoc(jv.dataset.jv); montrer("jour"); return; }
+  const col = e.target.closest("[data-cj]");
+  if (col) { const y = e.clientY - col.getBoundingClientRect().top, h = Math.min(23.5, Math.max(0, Math.floor(y / H_PX * 2) / 2)); formulaire(null, { jour: col.dataset.cj, heure: p2(Math.floor(h)) + ":" + (h % 1 ? "30" : "00") }); return; }
+  const c = e.target.closest(".case"); if (c) { REF = parseLoc(c.dataset.j); montrer("jour"); }
+});
+
+/* ---------- fenêtre ---------- */
+function ouvrirDlg(...enfants) { $("dlg").replaceChildren(...enfants.filter((c) => c != null)); $("voile-dlg").hidden = false; }
+function fermerDlg() { $("voile-dlg").hidden = true; $("dlg").replaceChildren(); }
+$("voile-dlg").addEventListener("click", (e) => { if (e.target.id === "voile-dlg") fermerDlg(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("voile-dlg").hidden) fermerDlg(); else if (!$("tiroir").hidden) ouvrirTiroir(false); } });
+function el(tag, attrs, ...enf) { const e = document.createElement(tag); Object.entries(attrs || {}).forEach(([k, v]) => { if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v); }); enf.flat().forEach((c) => { if (c != null) e.append(c); }); return e; }
+const texteBrut = (d) => String(d || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li)>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+function libRappel(m, a) {
+  if (a) { if (m === 0) return "le jour même à 0 h"; if (m < 0) { const h = -m / 60; return "le jour même à " + (Number.isInteger(h) ? h + " h" : Math.floor(h) + " h " + p2(-m % 60)); } const j = Math.ceil(m / 1440), t = j * 1440 - m; return (j === 1 ? "la veille" : j + " jours avant") + " à " + Math.floor(t / 60) + " h" + (t % 60 ? " " + p2(t % 60) : ""); }
+  if (m === 0) return "au début"; if (m % 10080 === 0) return (m / 10080) + " sem. avant"; if (m % 1440 === 0) return (m / 1440) + " j avant"; if (m % 60 === 0) return (m / 60) + " h avant"; return m + " min avant";
+}
+function libRegle(rr, d0) {
+  const i = rr.i || 1;
+  let t = rr.f === "D" ? (i > 1 ? "Tous les " + i + " jours" : "Tous les jours")
+    : rr.f === "W" ? (i > 1 ? "Toutes les " + i + " semaines" : "Toutes les semaines") + " le " + (rr.j && rr.j.length ? rr.j : [jsem(d0)]).map((j) => JOURS_L[j]).join(", ")
+    : rr.f === "M" ? (i > 1 ? "Tous les " + i + " mois" : "Tous les mois") + " le " + d0.getDate()
+    : (i > 1 ? "Tous les " + i + " ans" : "Tous les ans") + " le " + d0.getDate() + " " + MOIS[d0.getMonth()];
+  if (rr.u) t += ", jusqu'au " + parseLoc(rr.u).toLocaleDateString("fr-FR"); else if (rr.n) t += ", " + rr.n + " fois";
+  return t;
+}
+function detail(x) {
+  if (!x) return;
+  const ev = x.ev, master = ev.serie ? EV[ev.serie] : (ev.rr ? ev : null);
+  let quand;
+  if (ev.a) { const fe = AJ(x.f, -1); quand = dateLongue(x.d) + (ymd(fe) !== ymd(x.d) ? " → " + dateLongue(fe) : "") + " (journée entière)"; }
+  else quand = dateLongue(x.d) + ", " + x.s.slice(11) + " – " + (ymd(x.f) !== ymd(x.d) ? dateLongue(x.f) + ", " : "") + x.e.slice(11);
+  const cat = catDe(ev);
+  const raps = rappelsDe(ev);
+  ouvrirDlg(
+    el("h2", null, ev.t),
+    el("div", { class: "m" }, "🕒 " + quand),
+    master ? el("div", { class: "m" }, "🔁 " + libRegle(master.rr, parseLoc(master.s)) + (ev.serie ? " (occurrence modifiée)" : "")) : null,
+    ev.l ? el("div", { class: "m" }, "📍 ", el("a", { href: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(ev.l), target: "_blank", rel: "noopener" }, ev.l)) : null,
+    cat ? el("div", { class: "m" }, el("span", { class: "badge", style: "background:" + cat.couleur + ";color:" + texteSur(cat.couleur) }, cat.nom)) : null,
+    raps.length ? el("div", { class: "m" }, "🔔 " + raps.map((m) => libRappel(m, ev.a)).join(", ") + (ev.rap ? "" : " (par défaut)")) : null,
+    ev.inv && ev.inv.length ? el("div", { class: "m" }, "👥 " + ev.inv.join(", ")) : null,
+    ev.prov ? el("div", { class: "m" }, "❔ Provisoire (non confirmé)") : null,
+    ev.d ? el("pre", null, texteBrut(ev.d)) : null,
+    el("div", { class: "act" },
+      el("button", { class: "btn dang g", type: "button", onclick: () => supprimerAvecChoix(x) }, "Supprimer"),
+      el("button", { class: "btn", type: "button", onclick: () => formulaire(x) }, "Modifier"),
+      el("button", { class: "btn prim", type: "button", onclick: fermerDlg }, "Fermer"))
+  );
+}
+const rappelsDe = (ev) => Array.isArray(ev.rap) ? ev.rap : (ev.a ? (REG.rappelDefautJournee != null ? [REG.rappelDefautJournee] : []) : (REG.rappelDefaut != null ? [REG.rappelDefaut] : []));
+
+/* choix pour les séries : cette occurrence / les suivantes / toute la série */
+function choixSerie(titre, avecSuivantes, suite) {
+  ouvrirDlg(el("h2", null, titre), el("div", { class: "choix-serie" },
+    el("button", { class: "btn", type: "button", onclick: () => suite("une") }, "Cet événement seulement"),
+    avecSuivantes ? el("button", { class: "btn", type: "button", onclick: () => suite("suivantes") }, "Cet événement et les suivants") : null,
+    el("button", { class: "btn", type: "button", onclick: () => suite("toutes") }, "Tous les événements de la série"),
+    el("button", { class: "btn prim", type: "button", onclick: fermerDlg }, "Annuler")));
+}
+const chiffres = (s) => s.replace(/[^0-9]/g, "");
+function supprimerAvecChoix(x) {
+  const ev = x.ev;
+  if (!ev.rr && !ev.serie) {
+    ouvrirDlg(el("h2", null, "Supprimer « " + ev.t + " » ?"), el("div", { class: "act" },
+      el("button", { class: "btn", type: "button", onclick: fermerDlg }, "Annuler"),
+      el("button", { class: "btn dang", type: "button", onclick: () => { appliquer([[ev.id, null]]); fermerDlg(); toast("Événement supprimé."); } }, "Supprimer")));
+    return;
+  }
+  const master = ev.serie ? EV[ev.serie] : ev, occ = ev.serie ? ev.occ : x.occ;
+  if (!master) { appliquer([[ev.id, null]]); fermerDlg(); return; }   // série d'origine disparue
+  const premier = occ === master.s;
+  choixSerie("Supprimer un événement répété", !premier, (choix) => {
+    const ops = [];
+    if (choix === "une") {
+      if (ev.serie) ops.push([ev.id, null]);
+      ops.push([master.id, { ...master, ex: [...new Set([...(master.ex || []), occ])] }]);
+    } else if (choix === "suivantes") {
+      ops.push([master.id, { ...master, rr: { ...master.rr, u: ymd(AJ(parseLoc(occ), -1)), n: undefined } }]);
+      Object.values(EV).filter((e) => e.serie === master.id && e.occ >= occ).forEach((e) => ops.push([e.id, null]));
+    } else {
+      ops.push([master.id, null]);
+      Object.values(EV).filter((e) => e.serie === master.id).forEach((e) => ops.push([e.id, null]));
+    }
+    appliquer(ops); fermerDlg(); toast("Suppression faite.");
+  });
+}
+
+/* ---------- formulaire création / modification ---------- */
+const CHOIX_RAPPEL = [[0, "Au début"], [5, "5 min avant"], [10, "10 min avant"], [15, "15 min avant"], [30, "30 min avant"], [60, "1 h avant"], [120, "2 h avant"], [1440, "1 jour avant"], [2880, "2 jours avant"], [10080, "1 semaine avant"]];
+const CHOIX_RAPPEL_J = [[-480, "Le jour même à 8 h"], [-540, "Le jour même à 9 h"], [900, "La veille à 9 h"], [720, "La veille à 12 h"], [360, "La veille à 18 h"], [2340, "2 jours avant à 9 h"], [9540, "1 semaine avant à 9 h"]];
+function formulaire(x, opts) {
+  opts = opts || {};
+  const neuf = !x, ev = x ? x.ev : null;
+  const master = ev ? (ev.serie ? EV[ev.serie] : (ev.rr ? ev : null)) : null;
+  // valeurs de départ : l'occurrence affichée
+  let s, e;
+  if (neuf) {
+    const j = opts.jour || ymd(new Date()), h = opts.heure || (j === ymd(new Date()) ? p2(Math.min(22, new Date().getHours() + 1)) + ":00" : "09:00");
+    s = j + "T" + h; const d = parseLoc(s); e = cleLoc(new Date(d.getTime() + 3600000), false);
+  } else { s = x.s; e = x.e; }
+  const a0 = neuf ? false : ev.a;
+  const dS = s.slice(0, 10), dE = a0 ? ymd(AJ(parseLoc(e), -1)) : e.slice(0, 10);
+  const hS = a0 ? "09:00" : s.slice(11, 16), hE = a0 ? "10:00" : e.slice(11, 16);
+  const rr0 = master ? master.rr : null;
+  let RAP = neuf ? null : (Array.isArray(ev.rap) ? ev.rap.slice() : null);   // null = rappel par défaut
+
+  const fT = el("input", { type: "text", id: "fT", value: neuf ? "" : ev.t, autocomplete: "off" });
+  const fA = el("input", { type: "checkbox", id: "fA", checked: a0 });
+  const fDS = el("input", { type: "date", id: "fDS", value: dS }), fHS = el("input", { type: "time", id: "fHS", value: hS });
+  const fDE = el("input", { type: "date", id: "fDE", value: dE }), fHE = el("input", { type: "time", id: "fHE", value: hE });
+  const fR = el("select", { id: "fR" }, el("option", { value: "" }, "Ne se répète pas"), el("option", { value: "D" }, "Tous les jours"), el("option", { value: "W" }, "Toutes les semaines"), el("option", { value: "M" }, "Tous les mois (même date)"), el("option", { value: "Y" }, "Tous les ans"));
+  fR.value = rr0 ? rr0.f : "";
+  const fI = el("input", { type: "number", id: "fI", min: "1", max: "99", value: rr0 ? (rr0.i || 1) : 1 });
+  const unite = el("span");
+  const joursBox = el("div", { class: "jours-sem" }, JOURS.map((j, k) => el("label", null, el("input", { type: "checkbox", value: k, checked: rr0 && rr0.f === "W" && rr0.j ? rr0.j.includes(k) : false }), j)));
+  const fFin = el("select", { id: "fFin" }, el("option", { value: "" }, "Sans fin"), el("option", { value: "u" }, "Jusqu'au"), el("option", { value: "n" }, "Nombre de fois"));
+  fFin.value = rr0 && rr0.u ? "u" : rr0 && rr0.n ? "n" : "";
+  const fU = el("input", { type: "date", id: "fU", value: rr0 && rr0.u ? rr0.u : "" }), fN = el("input", { type: "number", id: "fN", min: "1", max: "999", value: rr0 && rr0.n ? rr0.n : 10 });
+  const blocRR = el("div", null, el("div", { class: "ligne-rr" }, "Tous les", fI, unite), joursBox, el("div", { class: "ligne-rr" }, "Fin :", fFin, fU, fN));
+  const fC = el("select", { id: "fC" }, el("option", { value: "" }, "Sans catégorie"), REG.categories.map((c) => el("option", { value: c.id }, c.nom || "Sans nom")));
+  fC.value = neuf ? "" : (ev.cat && catDe(ev) ? ev.cat : "");
+  const rapBox = el("div", { class: "rappels" });
+  const fRapAj = el("select", { id: "fRapAj" });
+  const fL = el("input", { type: "text", id: "fL", value: neuf ? "" : (ev.l || ""), autocomplete: "off" });
+  const fD = el("textarea", { id: "fD" }); fD.value = neuf ? "" : texteBrut(ev.d);
+  const err = el("div", { class: "err" });
+  function majRappels() {
+    const a = fA.checked, liste = RAP === null ? (a ? (REG.rappelDefautJournee != null ? [REG.rappelDefautJournee] : []) : (REG.rappelDefaut != null ? [REG.rappelDefaut] : [])) : RAP;
+    rapBox.replaceChildren(...[...liste.map((m) => el("span", { class: "badge" }, libRappel(m, a), el("button", { type: "button", "aria-label": "Retirer ce rappel", onclick: () => { RAP = liste.filter((v) => v !== m); majRappels(); } }, "×"))),
+      RAP === null && liste.length ? el("small", { style: "color:var(--muted)" }, "(par défaut)") : null,
+      !liste.length ? el("small", { style: "color:var(--muted)" }, "Aucun rappel") : null].filter(Boolean));
+    fRapAj.replaceChildren(el("option", { value: "" }, "＋ Ajouter un rappel…"), ...(a ? CHOIX_RAPPEL_J : CHOIX_RAPPEL).filter(([m]) => !liste.includes(m)).map(([m, t]) => el("option", { value: m }, t)));
+  }
+  fRapAj.addEventListener("change", () => { if (fRapAj.value === "") return; const cur = RAP === null ? (fA.checked ? (REG.rappelDefautJournee != null ? [REG.rappelDefautJournee] : []) : (REG.rappelDefaut != null ? [REG.rappelDefaut] : [])) : RAP; RAP = [...cur, Number(fRapAj.value)].sort((p, q) => p - q); majRappels(); });
+  function majForme() {
+    const a = fA.checked; fHS.hidden = a; fHE.hidden = a;
+    blocRR.hidden = !fR.value; joursBox.hidden = fR.value !== "W";
+    unite.textContent = { D: "jour(s)", W: "semaine(s)", M: "mois", Y: "an(s)" }[fR.value] || "";
+    fU.hidden = fFin.value !== "u"; fN.hidden = fFin.value !== "n";
+    if (fR.value === "W" && ![...joursBox.querySelectorAll("input")].some((i) => i.checked)) { const d = fDS.value ? parseLoc(fDS.value) : new Date(); joursBox.querySelectorAll("input")[jsem(d)].checked = true; }
+  }
+  fA.addEventListener("change", () => { if (RAP !== null && RAP.length) RAP = null; majForme(); majRappels(); });
+  fR.addEventListener("change", majForme); fFin.addEventListener("change", majForme);
+  fDS.addEventListener("change", () => { if (!fDE.value || fDE.value < fDS.value) fDE.value = fDS.value; });
+  fHS.addEventListener("change", () => { if (fDE.value === fDS.value && fHE.value <= fHS.value) { const d = parseLoc(fDS.value + "T" + fHS.value); fHE.value = hm(new Date(d.getTime() + 3600000)); } });
+
+  const enr = el("button", { class: "btn prim", type: "button" }, "Enregistrer");
+  ouvrirDlg(
+    el("h2", null, neuf ? "Nouvel événement" : "Modifier l'événement"),
+    el("div", { class: "form" },
+      el("label", { for: "fT" }, "Titre *"), fT,
+      el("label", { class: "chk" }, fA, "Journée entière"),
+      el("div", { class: "duo" }, el("div", null, el("label", { for: "fDS" }, "Début"), fDS), el("div", null, el("label", { for: "fHS" }, " "), fHS)),
+      el("div", { class: "duo" }, el("div", null, el("label", { for: "fDE" }, "Fin"), fDE), el("div", null, el("label", { for: "fHE" }, " "), fHE)),
+      el("label", { for: "fR" }, "Répétition"), fR, blocRR,
+      el("label", { for: "fC" }, "Catégorie"), fC,
+      el("label", null, "Rappels"), rapBox, fRapAj,
+      el("label", { for: "fL" }, "Lieu"), fL,
+      el("label", { for: "fD" }, "Description"), fD, err),
+    el("div", { class: "act" }, el("button", { class: "btn", type: "button", onclick: fermerDlg }, "Annuler"), enr));
+  majForme(); majRappels(); if (neuf) fT.focus();
+
+  enr.addEventListener("click", () => {
+    const t = fT.value.trim(), a = fA.checked, ds = fDS.value, de = fDE.value || ds;
+    const ko = (m) => { err.textContent = m; };
+    if (!t) return ko("Le titre est obligatoire.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ds)) return ko("La date de début est obligatoire.");
+    let ns, ne;
+    if (a) { if (de < ds) return ko("La fin est avant le début."); ns = ds; ne = ymd(AJ(parseLoc(de), 1)); }
+    else { if (!fHS.value || !fHE.value) return ko("Indique les heures de début et de fin."); ns = ds + "T" + fHS.value; ne = de + "T" + fHE.value; if (ne <= ns) return ko("La fin doit être après le début."); }
+    let rr = null;
+    if (fR.value) {
+      rr = { f: fR.value, i: Math.min(99, Math.max(1, parseInt(fI.value, 10) || 1)) };
+      if (rr.f === "W") { rr.j = [...joursBox.querySelectorAll("input")].filter((i) => i.checked).map((i) => +i.value); if (!rr.j.length) return ko("Coche au moins un jour de la semaine."); }
+      if (fFin.value === "u") { if (!fU.value) return ko("Indique la date de fin de la répétition."); if (fU.value < ds) return ko("La fin de la répétition est avant le début."); rr.u = fU.value; }
+      if (fFin.value === "n") rr.n = Math.min(999, Math.max(1, parseInt(fN.value, 10) || 1));
+    }
+    const champs = { t, a, s: ns, e: ne, l: fL.value.trim(), d: fD.value.trim(), cat: fC.value, rap: RAP === null ? undefined : RAP };
+    const garde = (o) => { const r = {}; ["inv", "prov", "src", "gid"].forEach((k) => { if (o && o[k] !== undefined) r[k] = o[k]; }); return r; };
+    if (neuf) { appliquer([[nouvelId(), { ...champs, rr: rr || undefined, src: "appli" }]]); fermerDlg(); REF = parseLoc(ns); rendre(); toast("Événement ajouté."); return; }
+    if (!master) {   // événement simple (il peut devenir répété)
+      appliquer([[ev.id, { ...garde(ev), ...champs, rr: rr || undefined }]]); fermerDlg(); toast("Modification enregistrée."); return;
+    }
+    const occ = ev.serie ? ev.occ : x.occ, premier = occ === master.s;
+    choixSerie("Modifier un événement répété", !premier, (choix) => {
+      const ops = [];
+      if (choix === "une") {
+        const id = ev.serie ? ev.id : master.id + "__" + chiffres(occ);
+        ops.push([id, { ...garde(ev), ...champs, serie: master.id, occ }]);
+        if (!(master.ex || []).includes(occ)) ops.push([master.id, { ...master, ex: [...(master.ex || []), occ] }]);
+      } else {
+        // décalage appliqué à la série : écart entre l'occurrence affichée et sa nouvelle date
+        const ecart = nbJours(parseLoc(occ), parseLoc(ns));
+        const base = choix === "toutes" ? parseLoc(master.s) : parseLoc(occ);
+        const nd = AJ(jourDe(base), ecart), durMs = parseLoc(ne) - parseLoc(ns), durJ = nbJours(parseLoc(ns), parseLoc(ne));
+        const s2 = a ? ymd(nd) : ymd(nd) + "T" + ns.slice(11);
+        const e2 = a ? ymd(AJ(nd, durJ)) : cleLoc(new Date(parseLoc(s2).getTime() + durMs), false);
+        let rr2 = rr ? { ...rr } : null;
+        if (rr2 && rr2.f === "W" && ecart % 7 && rr && master.rr.f === "W" && JSON.stringify(rr.j) === JSON.stringify(master.rr.j || [jsem(parseLoc(master.s))])) rr2.j = rr2.j.map((j) => (((j + ecart) % 7) + 7) % 7);
+        if (choix === "toutes") {
+          ops.push([master.id, { ...garde(master), ...champs, s: s2, e: e2, rr: rr2 || undefined, ex: rr2 && ecart === 0 ? master.ex : undefined }]);
+          if (!rr2 || ecart !== 0) Object.values(EV).filter((o) => o.serie === master.id).forEach((o) => ops.push([o.id, null]));
+        } else {
+          ops.push([master.id, { ...master, rr: { ...master.rr, u: ymd(AJ(parseLoc(occ), -1)), n: undefined } }]);
+          const nid = nouvelId();
+          ops.push([nid, { ...garde(master), ...champs, s: s2, e: e2, rr: rr2 || undefined, ex: (master.ex || []).filter((k) => k > occ && ecart === 0) }]);
+          Object.values(EV).filter((o) => o.serie === master.id && o.occ >= occ).forEach((o) => ops.push([o.id, ecart === 0 && rr2 ? { ...o, serie: nid } : null]));
+        }
+      }
+      appliquer(ops); fermerDlg(); toast("Modification enregistrée.");
+    });
+  });
+}
+
+/* ---------- réglages : catégories et rappels ---------- */
+let REG_SALE = false, CATS_EDIT = [];
+function rendreReglages() {
+  CATS_EDIT = REG.categories.map((c) => ({ ...c }));
+  dessinerCats();
+  const opt = (sel, liste, val) => { sel.replaceChildren(el("option", { value: "" }, "Aucun"), ...liste.map(([m, t]) => el("option", { value: m }, t))); sel.value = val == null ? "" : String(val); };
+  opt($("rap-def"), CHOIX_RAPPEL, REG.rappelDefaut); opt($("rap-def-j"), CHOIX_RAPPEL_J, REG.rappelDefautJournee);
+  majNotifEtat();
+}
+function dessinerCats() {
+  const compte = {}; Object.values(EV).forEach((e) => { compte[e.cat || ""] = (compte[e.cat || ""] || 0) + 1; });
+  $("liste-cats").replaceChildren(...CATS_EDIT.map((c, k) => {
+    const n = el("input", { type: "text", value: c.nom, "aria-label": "Nom de la catégorie" }); n.addEventListener("input", () => { c.nom = n.value; REG_SALE = true; });
+    const co = el("input", { type: "color", value: c.couleur, "aria-label": "Couleur" }); co.addEventListener("input", () => { c.couleur = co.value; REG_SALE = true; });
+    const nb = compte[c.id] || 0;
+    const sup = el("button", { class: "lien rouge", type: "button", title: "Supprimer la catégorie" }, "🗑️");
+    sup.addEventListener("click", () => { if (nb && !confirm("La catégorie « " + c.nom + " » est utilisée par " + nb + " événement(s). Ils passeront en « Sans catégorie ». Continuer ?")) return; CATS_EDIT.splice(k, 1); REG_SALE = true; dessinerCats(); });
+    return el("div", { class: "cat-ligne" }, co, n, el("small", null, nb + " év."), sup);
+  }), CATS_EDIT.length ? "" : el("p", { class: "note" }, "Aucune catégorie."));
+}
+$("cat-ajout").addEventListener("click", () => { CATS_EDIT.push({ id: "c" + Date.now().toString(36), nom: "Nouvelle catégorie", couleur: "#039BE5" }); REG_SALE = true; dessinerCats(); });
+$("cat-enr").addEventListener("click", () => {
+  const cats = CATS_EDIT.map((c) => ({ id: c.id, nom: (c.nom || "").trim() || "Sans nom", couleur: /^#[0-9a-fA-F]{6}$/.test(c.couleur) ? c.couleur : "#1A5FB4" }));
+  setDoc(refReg(), { categories: cats }, { merge: true }).catch(erreur); marquerModif(1);
+  REG.categories = cats; REG_SALE = false; rendreFiltres(); msgReg("Catégories enregistrées.");
+});
+$("rap-enr").addEventListener("click", () => {
+  const v = (id) => $(id).value === "" ? null : Number($(id).value);
+  setDoc(refReg(), { rappelDefaut: v("rap-def"), rappelDefautJournee: v("rap-def-j") }, { merge: true }).catch(erreur); marquerModif(1);
+  msgReg("Rappels par défaut enregistrés.");
+});
+function msgReg(t, alerte) { const m = $("reg-msg"); m.textContent = t; m.classList.toggle("alerte", !!alerte); }
+function majNotifEtat() {
+  const e = $("notif-etat");
+  if (!("Notification" in window)) { e.textContent = "Ce navigateur ne gère pas les notifications : les rappels s'affichent dans l'agenda."; $("notif").hidden = true; return; }
+  $("notif").hidden = Notification.permission === "granted";
+  e.textContent = Notification.permission === "granted" ? "Notifications autorisées sur cet appareil." : Notification.permission === "denied" ? "Notifications refusées sur cet appareil (à changer dans les réglages du navigateur)." : "Notifications pas encore autorisées sur cet appareil.";
+}
+$("notif").addEventListener("click", () => { if ("Notification" in window) Notification.requestPermission().then(majNotifEtat); });
+
+/* ---------- rappels (agenda ouvert) ---------- */
+const CLE_RAP = "agenda_rappels_faits";
+let FAITS = {}; try { FAITS = JSON.parse(localStorage.getItem(CLE_RAP) || "{}"); } catch (e) { FAITS = {}; }
+function verifierRappels() {
+  if (!UID || !CHARGE) return;
+  const maint = Date.now(), de = new Date(maint - 864e5), a = new Date(maint + 15 * 864e5);
+  const aEnvoyer = [];
+  for (const x of instances(de, a)) {
+    for (const m of rappelsDe(x.ev)) {
+      const quand = x.d.getTime() - m * 60000, cle = x.id + "|" + x.s + "|" + m;
+      if (quand <= maint && quand > maint - 15 * 60000 && !FAITS[cle]) { FAITS[cle] = maint; aEnvoyer.push(x); }
+    }
+  }
+  Object.keys(FAITS).forEach((k) => { if (FAITS[k] < maint - 3 * 864e5) delete FAITS[k]; });
+  try { localStorage.setItem(CLE_RAP, JSON.stringify(FAITS)); } catch (e) { /* sans gravité */ }
+  aEnvoyer.forEach((x) => {
+    const quand = x.ev.a ? "le " + dateLongue(x.d) : (ymd(x.d) === ymd(new Date()) ? "aujourd'hui à " : dateCourte(x.d) + " à ") + x.s.slice(11);
+    toast("🔔 " + x.ev.t + " — " + quand, false, true);
+    if ("Notification" in window && Notification.permission === "granted") {
+      const o = { body: quand + (x.ev.l ? "\n📍 " + x.ev.l : ""), icon: "icon-192.png", tag: x.id + x.s };
+      navigator.serviceWorker && navigator.serviceWorker.getRegistration ? navigator.serviceWorker.getRegistration().then((r) => r ? r.showNotification(x.ev.t, o) : new Notification(x.ev.t, o)).catch(() => { /* sans gravité */ }) : new Notification(x.ev.t, o);
+    }
+  });
+}
+setInterval(verifierRappels, 30000);
+setInterval(() => { if (VUE === "semaine" || VUE === "jour") rendre(); }, 5 * 60000);
+
+/* ---------- toasts ---------- */
+let minuteurToast = null;
+function toast(t, alerte, rappel) {
+  const e = $("toast"); e.textContent = t; e.classList.toggle("alerte", !!alerte); e.classList.toggle("rappel", !!rappel); e.hidden = false;
+  clearTimeout(minuteurToast); minuteurToast = setTimeout(() => { e.hidden = true; }, rappel ? 20000 : alerte ? 7000 : 3500);
+}
+$("toast").addEventListener("click", () => { $("toast").hidden = true; });
+
+/* ---------- sauvegarde JSON (même principe que COURSES) ---------- */
+const KEY_DERNIERE = "agenda_derniere_sauvegarde";
+function horodatage() { const d = new Date(); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "_" + p2(d.getHours()) + "h" + p2(d.getMinutes()); }
+const pl = (n, mot) => n + " " + mot + (n > 1 ? "s" : "");
+function msgSauv(t, alerte) { const m = $("sauv-msg"); m.textContent = t || ""; m.classList.toggle("alerte", !!alerte); }
+function avecDelai(p, ms, quoi) { return Promise.race([p, new Promise((ok, ko) => setTimeout(() => ko(new Error(quoi + " : le réseau ne répond pas")), ms))]); }
+function telecharger(nom, contenu) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([contenu], { type: "application/json" })); a.download = nom;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+const fsDispo = () => typeof window.showDirectoryPicker === "function";
+function fsBase() { return new Promise((ok, ko) => { const r = indexedDB.open("agenda_fs", 1); r.onupgradeneeded = () => r.result.createObjectStore("h"); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); }); }
+function fsGet() { return fsBase().then((b) => new Promise((ok) => { const q = b.transaction("h").objectStore("h").get("dossier"); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); })).catch(() => null); }
+function fsSet(h) { return fsBase().then((b) => new Promise((ok, ko) => { const t = b.transaction("h", "readwrite"); if (h) t.objectStore("h").put(h, "dossier"); else t.objectStore("h").delete("dossier"); t.oncomplete = ok; t.onerror = () => ko(t.error); })); }
+async function preparerDossier() {
+  if (!fsDispo()) return { h: null, err: "" };
+  try {
+    const h = await fsGet(); if (!h) return { h: null, err: "" };
+    const opt = { mode: "readwrite" };
+    let pe = await h.queryPermission(opt); if (pe !== "granted") pe = await h.requestPermission(opt);
+    return pe === "granted" ? { h, err: "" } : { h: null, err: "accès au dossier refusé" };
+  } catch (e) { return { h: null, err: (e && e.message) || "erreur inconnue" }; }
+}
+async function ecrireFichier(dos, nom, txt) {
+  if (dos.h) {
+    try { const w = await (await dos.h.getFileHandle(nom, { create: true })).createWritable(); await w.write(txt); await w.close(); return "dossier « " + dos.h.name + " »"; }
+    catch (e) { dos.err = (e && e.message) || "erreur inconnue"; }
+  }
+  telecharger(nom, txt);
+  return dos.err ? "Téléchargements (dossier inaccessible : " + dos.err + ")" : "Téléchargements";
+}
+async function lireTout() {
+  const an = await avecDelai(getDocs(colAnnees()), 20000, "Lecture de l'agenda");
+  const evenements = [];
+  an.docs.forEach((d) => { const m = (d.data() || {}).ev || {}; Object.keys(m).forEach((id) => evenements.push({ id, data: m[id] })); });
+  evenements.sort((x, y) => String(x.data.s).localeCompare(String(y.data.s)));
+  const r = await avecDelai(getDoc(refReg()), 20000, "Lecture des réglages");
+  return { application: "AGENDA", format: 1, version: VERSION, exporteLe: new Date().toISOString(), reglages: r.exists() ? r.data() : {}, evenements, annees: an.docs.map((d) => d.id) };
+}
+function compter(o) {
+  const n = o.evenements.length, s = o.evenements.filter((e) => e.data.rr).length, c = ((o.reglages || {}).categories || []).length;
+  return pl(n, "événement") + " (dont " + pl(s, "série") + " répétée" + (s > 1 ? "s" : "") + "), " + pl(c, "catégorie");
+}
+function nbModifs() { return Math.max(0, MODIFS); }
+function retirerModifs(n, quand) {
+  if (!UID) return; MODIFS = Math.max(0, MODIFS - n); majBoutonSauv();
+  const d = { modifs: increment(-n) }; if (quand) d.derniereSauvegarde = quand;
+  setDoc(refSauv(), d, { merge: true }).catch(() => { /* compteur seulement */ });
+}
+async function sauvegarder(dos, prefixe) {
+  if (!navigator.onLine) throw new Error("pas de réseau");
+  const n0 = nbModifs();
+  const obj = await lireTout(), nom = prefixe + horodatage() + ".json";
+  const ou = await ecrireFichier(dos, nom, JSON.stringify(obj, null, 1));
+  const quand = new Date().toISOString();
+  try { localStorage.setItem(KEY_DERNIERE, quand); } catch (e) { /* sans gravité */ }
+  DERNIERE_SAUV = quand; retirerModifs(n0, quand);
+  return { obj, nom, ou };
+}
+function rendreSauvegarde() {
+  const l = Object.values(EV);
+  $("sauv-contenu").textContent = pl(l.length, "événement") + " (dont " + pl(l.filter((e) => e.rr).length, "série") + " répétée" + (l.filter((e) => e.rr).length > 1 ? "s" : "") + "), " + pl(REG.categories.length, "catégorie") + ".";
+  let d = DERNIERE_SAUV || null; if (!d) { try { d = localStorage.getItem(KEY_DERNIERE); } catch (e) { d = null; } }
+  const m = nbModifs();
+  $("sauv-derniere").textContent = (d ? new Date(d).toLocaleString("fr-FR") : "jamais") + (m ? " — " + pl(m, "modification") + " depuis" : "");
+  $("fs-choisir").hidden = !fsDispo();
+  $("fs-aide").textContent = fsDispo() ? "Choisis une fois le dossier (par exemple « AGENDA JSON ») : chaque sauvegarde y sera enregistrée directement. Le navigateur peut redemander l'autorisation : accepte." : "Ce navigateur ne permet pas de choisir un dossier : la sauvegarde va dans « Téléchargements ».";
+  fsGet().then((h) => { $("fs-nom").textContent = h ? "« " + h.name + " »" : "aucun (le fichier va dans « Téléchargements »)"; $("fs-oublier").hidden = !h; });
+}
+let SAUV_EN_COURS = false;
+async function sauvegarderMaintenant(afficher) {
+  if (SAUV_EN_COURS) return; SAUV_EN_COURS = true; $("sauv-go").disabled = true; $("btn-sauv").disabled = true;
+  afficher("Sauvegarde en cours…");
+  try { const dos = await preparerDossier(), r = await sauvegarder(dos, "AGENDA_sauvegarde_"); afficher("Sauvegarde enregistrée : " + r.nom + " → " + r.ou + ". " + compter(r.obj) + "."); }
+  catch (e) { afficher("Sauvegarde impossible : " + e.message + ".", true); }
+  SAUV_EN_COURS = false; $("sauv-go").disabled = false; $("btn-sauv").disabled = false;
+  if (VUE === "sauvegarde") rendreSauvegarde();
+}
+function majBoutonSauv() {
+  const n = nbModifs(), b = $("btn-sauv"), pa = $("pastille-sauv"); if (!b) return;
+  pa.hidden = !n; pa.textContent = n > 99 ? "99+" : String(n);
+  const t = n ? "Sauvegarder (" + pl(n, "modification") + " non sauvegardée" + (n > 1 ? "s" : "") + ")" : "Sauvegarder (rien de nouveau)";
+  b.title = t; b.setAttribute("aria-label", t);
+}
+$("sauv-go").addEventListener("click", () => sauvegarderMaintenant(msgSauv));
+$("btn-sauv").addEventListener("click", () => sauvegarderMaintenant(toast));
+window.addEventListener("beforeunload", (e) => { if (nbModifs() > 0) { e.preventDefault(); e.returnValue = true; } });
+$("fs-choisir").addEventListener("click", () => {
+  window.showDirectoryPicker({ id: "agenda-sauvegardes", mode: "readwrite" })
+    .then((h) => fsSet(h).then(() => { msgSauv("Dossier de sauvegarde : « " + h.name + " »"); rendreSauvegarde(); }))
+    .catch((e) => { if (e && e.name !== "AbortError") msgSauv("Dossier non retenu : " + e.message, true); });
+});
+$("fs-oublier").addEventListener("click", () => { fsSet(null).then(() => { msgSauv("Dossier retiré : les sauvegardes iront dans « Téléchargements »."); rendreSauvegarde(); }); });
+
+/* restauration : remplace tout, après une sauvegarde automatique de l'état actuel */
+const objet = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+const RE_DATE = /^\d{4}-\d{2}-\d{2}$/, RE_DH = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+function validerSauvegarde(o) {
+  if (!objet(o) || o.application !== "AGENDA" || !Array.isArray(o.evenements)) throw new Error("ce fichier n'est pas un fichier AGENDA");
+  const vus = new Set();
+  o.evenements.forEach((x, k) => {
+    if (!objet(x) || typeof x.id !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(x.id) || vus.has(x.id) || !objet(x.data)) throw new Error("événement n° " + (k + 1) + " mal formé");
+    vus.add(x.id); const d = x.data;
+    const ok = d.a ? RE_DATE.test(d.s) && RE_DATE.test(d.e) : RE_DH.test(d.s) && RE_DH.test(d.e);
+    if (!ok || typeof d.t !== "string") throw new Error("dates ou titre incorrects pour l'événement « " + (d.t || x.id) + " »");
+    if (d.rr != null && (!objet(d.rr) || !["D", "W", "M", "Y"].includes(d.rr.f))) throw new Error("répétition incorrecte pour « " + d.t + " »");
+  });
+  if (o.reglages != null && !objet(o.reglages)) throw new Error("réglages mal formés");
+  return o;
+}
+let A_RESTAURER = null;
+$("rest-choisir").addEventListener("click", () => { $("rest-confirme").hidden = true; A_RESTAURER = null; $("file-json").click(); });
+$("file-json").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
+  f.text().then((t) => {
+    let o; try { o = validerSauvegarde(JSON.parse(t)); } catch (err) { msgSauv("Restauration impossible : " + err.message + ".", true); return; }
+    A_RESTAURER = o;
+    const date = o.exporteLe ? new Date(o.exporteLe).toLocaleString("fr-FR") : "date inconnue";
+    $("rest-txt").textContent = "Restaurer « " + f.name + " » (" + date + ") : " + compter(o) + " ? Toutes les données actuelles de l'agenda seront remplacées.";
+    $("rest-confirme").hidden = false; msgSauv("");
+  }).catch(() => msgSauv("Lecture du fichier impossible.", true));
+});
+$("rest-non").addEventListener("click", () => { $("rest-confirme").hidden = true; A_RESTAURER = null; });
+$("rest-oui").addEventListener("click", async () => {
+  const o = A_RESTAURER; if (!o) return;
+  $("rest-confirme").hidden = true; A_RESTAURER = null;
+  const btn = $("rest-choisir"); btn.disabled = true;
+  try {
+    msgSauv("Sauvegarde de l'état actuel…");
+    const avant = await sauvegarder(await preparerDossier(), "AGENDA_avant_restauration_");
+    msgSauv("Restauration en cours…");
+    const parAn = {};
+    o.evenements.forEach((x) => { const an = x.data.s.slice(0, 4); (parAn[an] = parAn[an] || {})[x.id] = x.data; });
+    const ops = (avant.obj.annees || []).filter((an) => !parAn[an]).map((an) => [refAn(an), null])
+      .concat(Object.keys(parAn).map((an) => [refAn(an), { ev: parAn[an], maj: Date.now() }]));
+    if (o.reglages) ops.push([refReg(), o.reglages]);
+    for (let i = 0; i < ops.length; i += 100) {
+      const b = writeBatch(db);
+      ops.slice(i, i + 100).forEach(([r, d]) => { if (d) b.set(r, d); else b.delete(r); });
+      await avecDelai(b.commit(), 60000, "Enregistrement");
+    }
+    MODIFS = 0; majBoutonSauv(); setDoc(refSauv(), { modifs: 0 }, { merge: true }).catch(() => { /* compteur seulement */ });
+    msgSauv("Restauration faite : " + compter(o) + ". L'état d'avant est dans " + avant.nom + " (" + avant.ou + ").");
+    rendreSauvegarde();
+  } catch (e) { msgSauv("Restauration interrompue : " + e.message + ". Si une partie a été remplacée, restaure le fichier « AGENDA_avant_restauration_… ».", true); }
+  btn.disabled = false;
+});
+
+/* ---------- ouverture sans réseau : l'appli est gardée sur l'appareil (service worker) ---------- */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  navigator.serviceWorker.register("sw.js").catch((e) => console.warn("Mode hors ligne indisponible :", e));
+}
+</script>
+</body>
+</html>
