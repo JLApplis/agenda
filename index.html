@@ -49,6 +49,10 @@ h1::first-letter { text-transform: uppercase; }
 .onglets { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
 .onglets button { border: none; background: transparent; color: var(--fg); font-weight: 600; font-size: 14px; padding: 7px 12px; border-radius: 9px; cursor: pointer; }
 .onglets button.actif { background: var(--bleu); color: #fff; }
+.btn-simple { display: flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 7px 12px; font: 600 14px var(--font); color: var(--fg); cursor: pointer; white-space: nowrap; }
+.btn-simple .voyant { width: 12px; height: 12px; border-radius: 50%; background: #C9D2DD; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); transition: background .15s, box-shadow .15s; }
+.btn-simple[aria-pressed="true"] { border-color: #2EAD4B; color: #1C6B2F; background: #EEF9F1; }
+.btn-simple[aria-pressed="true"] .voyant { background: #2EAD4B; box-shadow: 0 0 0 3px rgba(46,173,75,.25), 0 0 8px #2EAD4B; }
 .recherche { flex: 1; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font: inherit; color: var(--fg); }
 .recherche:focus { outline: none; border-color: var(--bleu); }
 /* mois */
@@ -82,6 +86,7 @@ h1::first-letter { text-transform: uppercase; }
 .vide-mois { padding: 8px 14px; color: var(--muted); font-size: 14px; border-bottom: 1px solid var(--line); }
 .jd { padding: 6px 8px; font-weight: 700; font-size: 13px; line-height: 1.2; border-right: 1px solid var(--line); background: rgba(255,255,255,.45); }
 .jd small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
+.reg.we .jd { color: #6B4E8A; }
 .reg.auj .jd, .reg.auj .tl { background-color: var(--auj); }
 .tl { position: relative; min-width: 0; background-image: repeating-linear-gradient(to right, rgba(31,39,51,.13) 0 1px, transparent 1px var(--pas-heure, 40px)); }
 .tl-jour { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 4px 0; position: relative; z-index: 1; }
@@ -276,6 +281,7 @@ h1::first-letter { text-transform: uppercase; }
       <button type="button" data-vue="mois">Mois</button>
       <button type="button" data-vue="liste">Liste</button>
     </div>
+    <button type="button" class="btn-simple" id="btn-simple" aria-pressed="false" title="Vue simplifiée : seulement les jours qui ont des événements"><span class="voyant" aria-hidden="true"></span>Vue simplifiée</button>
     <input type="search" class="recherche" id="rech" placeholder="Rechercher…" aria-label="Rechercher un événement">
   </div>
   </div>
@@ -331,7 +337,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "2.2";
+const VERSION = "2.3";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -553,7 +559,7 @@ function montrer(v) {
   VUE = v; if (["mois", "liste"].includes(v)) { try { localStorage.setItem("agenda_vue", v); } catch (e) { /* sans gravité */ } }
   ouvrirTiroir(false);
   const cal = ["mois", "liste"].includes(v);
-  $("zone").hidden = !cal; $("barre").hidden = !cal; $("fab").hidden = !cal;
+  $("zone").hidden = !cal; $("barre").hidden = !cal; $("fab").hidden = !cal; majBtnSimple();
   ["prec", "suiv", "auj"].forEach((id) => { $(id).hidden = !cal; });
   $("vue-reglages").hidden = v !== "reglages"; $("vue-sauvegarde").hidden = v !== "sauvegarde";
   document.querySelectorAll("[data-vue]").forEach((b) => b.classList.toggle("actif", b.dataset.vue === v));
@@ -720,6 +726,17 @@ const PASTELS_MOIS = [["#DCE8F8", "#EEF4FC", "#123F78"], ["#E6DDF6", "#F4EFFB", 
 const H0 = 7, H1 = 22, LIGNE_PX = 24;
 let _ctx = null;
 function largeurTexte(t) { if (!_ctx) _ctx = document.createElement("canvas").getContext("2d"); _ctx.font = "600 11.5px Figtree, 'Segoe UI', system-ui, sans-serif"; return Math.ceil(_ctx.measureText(t).width); }
+let SIMPLE = false;   // Liste : vue simplifiée (seulement les jours avec événements) ; sinon tous les jours
+try { SIMPLE = localStorage.getItem("agenda_liste_simple") === "1"; } catch (e) { /* sans gravité */ }
+function majBtnSimple() { const b = $("btn-simple"); b.setAttribute("aria-pressed", String(SIMPLE)); b.hidden = VUE !== "liste"; }
+$("btn-simple").addEventListener("click", () => {
+  // garder le jour affiché en haut
+  const hl = hautListe(), e = [...document.querySelectorAll(".liste .reg")].find((x) => x.getBoundingClientRect().bottom > hl + 5);
+  SIMPLE = !SIMPLE; try { localStorage.setItem("agenda_liste_simple", SIMPLE ? "1" : "0"); } catch (err) { /* sans gravité */ }
+  majBtnSimple();
+  if (e && !norm($("rech").value)) { REF = parseLoc(e.dataset.j); ALLER = "jour"; }
+  rendre();
+});
 let PLAGE_L = null;   // Liste en défilement continu : { deb, fin } (1er du premier mois, 1er du mois qui suit le dernier)
 const moisPlus = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
 const hautListe = () => $("entete").offsetHeight + (document.querySelector(".regle") ? document.querySelector(".regle").offsetHeight : 0);
@@ -771,7 +788,8 @@ function vueListe() {
   const ech = document.createElement("div"); ech.className = "ech";
   for (let hh = H0; hh <= H1; hh += petit ? 3 : 1) { const s = document.createElement("span"); s.textContent = hh + (petit ? "h" : ""); s.style.left = xH(hh) + "px"; if (hh === H0) s.style.transform = "none"; if (hh === H1) s.style.transform = "translateX(-100%)"; ech.appendChild(s); }
   regle.append(document.createElement("div"), ech); z.appendChild(regle);
-  const jours = Object.keys(parJour).sort();
+  let jours = Object.keys(parJour).sort();
+  if (!q && !SIMPLE) { jours = []; for (let d = de; d < a; d = AJ(d, 1)) jours.push(ymd(d)); }   // vue complète : tous les jours
   if (q && !jours.length) { const v = document.createElement("div"); v.className = "vide"; v.textContent = "Aucun événement trouvé."; z.appendChild(v); }
   let mc = "", bloc = z, premier = null;
   const bandeMois = (k) => {   // bande avec le nom du mois, puis tout le mois sur son fond pastel
@@ -788,7 +806,7 @@ function vueListe() {
       mc = j.slice(0, 7); videsAvant(mc); if (tousMois[0] === mc) tousMois.shift();
       bandeMois(mc);
     }
-    const d = parseLoc(j), items = parJour[j];
+    const d = parseLoc(j), items = parJour[j] || [];
     const reg = document.createElement("div"); reg.className = "reg" + (j === aujS ? " auj" : ""); reg.style.gridTemplateColumns = colJour + "px 1fr";
     const jd = document.createElement("div"); jd.className = "jd";
     jd.append(JOURS[jsem(d)] + " " + d.getDate()); if (q) { const sm = document.createElement("small"); sm.textContent = MOIS_C[d.getMonth()] + " " + d.getFullYear(); jd.appendChild(sm); }
@@ -832,7 +850,8 @@ function vueListe() {
       if (pastel) lab.style.opacity = ".75";
       zt.appendChild(lab);
     });
-    zt.style.height = (nbL ? nbL * LIGNE_PX + 6 : (ja.length ? 6 : 26)) + "px";
+    zt.style.height = (nbL ? nbL * LIGNE_PX + 6 : (ja.length ? 6 : 22)) + "px";
+    if (jsem(d) >= 5) reg.classList.add("we");   // samedi, dimanche
     tl.appendChild(zt);
     if (j === aujS && hDe(maint) >= H0 && hDe(maint) <= H1) { const m = document.createElement("div"); m.className = "tl-maint"; m.style.left = xH(hDe(maint)) + "px"; tl.appendChild(m); }
     reg.dataset.j = j; reg.append(jd, tl); bloc.appendChild(reg);
