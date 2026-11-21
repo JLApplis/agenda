@@ -1,8 +1,8 @@
-# 📅 Agenda
+# 📅 Monagenda
 
-**Agenda personnel** : vues Mois (défilement continu) et Liste, événements répétés, rappels, catégories colorées, impression. Synchronisé entre le téléphone et l'ordinateur. Remplace Google Agenda.
+**Monagenda — agenda personnel** : vues Mois (défilement continu) et Liste, événements répétés, rappels, catégories colorées, impression. Synchronisé entre le téléphone et l'ordinateur. Remplace Google Agenda.
 
-**[▶️ Ouvrir l'appli](https://jlapplis.github.io/agenda/)**
+**[▶️ Ouvrir l'appli](https://jlapplis.github.io/monagenda/)**
 
 ![Licence](https://img.shields.io/badge/licence-GPL_v3-blue)
 

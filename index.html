@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Agenda</title>
+<title>Monagenda</title>
 <meta name="theme-color" content="#1A5FB4">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -235,7 +235,7 @@ h1::first-letter { text-transform: uppercase; }
 <form class="connexion" id="ecran-connexion" hidden autocomplete="on">
   <div class="haut">
     <div class="deco-cal" aria-hidden="true">📅</div>
-    <h1>Agenda</h1>
+    <h1>Monagenda</h1>
     <div class="sous">Ton agenda, sur le téléphone et le PC</div>
   </div>
   <div class="corps">
@@ -250,7 +250,7 @@ h1::first-letter { text-transform: uppercase; }
 <div id="app" hidden>
 <div id="voile" hidden></div>
 <nav id="tiroir" aria-label="Menu" hidden>
-  <div class="tiroir-tete"><span class="tiroir-titre">Agenda</span><button class="fermer-tiroir" id="fermer-tiroir" type="button" aria-label="Fermer le menu">×</button></div>
+  <div class="tiroir-tete"><span class="tiroir-titre">Monagenda</span><button class="fermer-tiroir" id="fermer-tiroir" type="button" aria-label="Fermer le menu">×</button></div>
   <div class="tiroir-label">Affichage</div>
   <button class="tiroir-item" data-vue="mois" type="button"><span class="ic">🗓️</span>Mois</button>
   <button class="tiroir-item" data-vue="liste" type="button"><span class="ic">📋</span>Liste</button>
@@ -261,7 +261,7 @@ h1::first-letter { text-transform: uppercase; }
   <button class="tiroir-item" id="imprimer" type="button"><span class="ic">🖨️</span>Imprimer la vue</button>
   <button class="tiroir-item" data-vue="reglages" type="button"><span class="ic">⚙️</span>Réglages</button>
   <button class="tiroir-item" data-vue="sauvegarde" type="button"><span class="ic">💾</span>Sauvegarde</button>
-  <div class="tiroir-pied">Agenda <span id="version"></span> — JLApplis<br><button class="deco" id="deco" type="button">Se déconnecter</button>
+  <div class="tiroir-pied">Monagenda <span id="version"></span> — JLApplis<br><button class="deco" id="deco" type="button">Se déconnecter</button>
     <div class="deco-confirme" id="deco-confirme" hidden><span>Se déconnecter ? Pour te reconnecter, il faudra du réseau.</span><span class="deco-btns"><button class="btn" id="deco-non" type="button">Annuler</button><button class="btn dang" id="deco-oui" type="button">Se déconnecter</button></span></div></div>
 </nav>
 
@@ -271,7 +271,7 @@ h1::first-letter { text-transform: uppercase; }
     <button class="btn-menu" id="btn-menu" type="button" aria-label="Ouvrir le menu">☰</button>
     <button class="btn-menu" id="prec" type="button" aria-label="Période précédente">‹</button>
     <button class="btn-menu" id="suiv" type="button" aria-label="Période suivante">›</button>
-    <h1 id="titre">Agenda</h1>
+    <h1 id="titre">Monagenda</h1>
     <button class="btn-auj" id="auj" type="button" title="Aujourd'hui"><span class="long">Aujourd'hui</span><span class="court">Auj.</span></button>
     <span class="etat" id="etat">Chargement…</span>
     <button class="btn-menu" id="btn-sauv" type="button" title="Sauvegarder" aria-label="Sauvegarder">💾<span class="pastille" id="pastille-sauv" hidden></span></button>
@@ -314,7 +314,7 @@ h1::first-letter { text-transform: uppercase; }
       <p class="note" id="fs-aide"></p>
     </div>
     <div class="bloc-s"><h3>↩️ Restaurer</h3>
-      <p class="note">Remplace <b>toutes</b> les données actuelles par celles d'un fichier AGENDA (une sauvegarde, ou le fichier de reprise Google). Juste avant, l'état actuel est sauvegardé automatiquement (fichier « AGENDA_avant_restauration_… »). Il faut du réseau.</p>
+      <p class="note">Remplace <b>toutes</b> les données actuelles par celles d'un fichier de sauvegarde (Monagenda, ancienne sauvegarde AGENDA, ou le fichier de reprise Google). Juste avant, l'état actuel est sauvegardé automatiquement (fichier « MONAGENDA_avant_restauration_… »). Il faut du réseau.</p>
       <div class="btns"><button class="btn" id="rest-choisir" type="button">📂 Choisir un fichier…</button></div>
       <div class="confirme" id="rest-confirme" hidden><span id="rest-txt"></span><button class="btn" id="rest-non" type="button">Annuler</button><button class="btn dang" id="rest-oui" type="button">Tout remplacer</button></div>
       <input type="file" id="file-json" accept=".json,application/json" hidden>
@@ -330,14 +330,14 @@ h1::first-letter { text-transform: uppercase; }
 
 <script type="module">
 /*
-    Agenda — agenda personnel (JLApplis)
+    Monagenda — agenda personnel (JLApplis)
     Copyright (C) 2026 Jluc — JLApplis — Licence GPL v3 (voir LICENSE.txt)
 */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, getDoc, getDocs, onSnapshot, writeBatch, increment, deleteField, FieldPath } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const VERSION = "2.3";
+const VERSION = "2.4";
 
 /* ===== CONFIGURATION FIREBASE (même projet que COURSES : courses-e9163) ===== */
 const firebaseConfig = {
@@ -501,7 +501,7 @@ onAuthStateChanged(auth, (u) => {
     etat(snap.metadata.hasPendingWrites ? "Enregistrement…" : snap.metadata.fromCache ? "Hors ligne" : "À jour", snap.metadata.fromCache && !snap.metadata.hasPendingWrites && !CHARGE);
     $("bandeau-vide").hidden = !(CHARGE && !Object.keys(EV).length);
     rendre();
-  }, (err) => etat("Agenda injoignable (" + err.code + ")", true)));
+  }, (err) => etat("Monagenda injoignable (" + err.code + ")", true)));
   desabonner.push(onSnapshot(refReg(), (s) => {
     const x = s.exists() ? s.data() : {};
     REG = { categories: Array.isArray(x.categories) ? x.categories.filter((c) => c && c.id) : [], rappelDefaut: Number.isFinite(x.rappelDefaut) ? x.rappelDefaut : null, rappelDefautJournee: Number.isFinite(x.rappelDefautJournee) ? x.rappelDefautJournee : null };
@@ -1261,7 +1261,7 @@ async function lireTout() {
   an.docs.forEach((d) => { const m = (d.data() || {}).ev || {}; Object.keys(m).forEach((id) => evenements.push({ id, data: m[id] })); });
   evenements.sort((x, y) => String(x.data.s).localeCompare(String(y.data.s)));
   const r = await avecDelai(getDoc(refReg()), 20000, "Lecture des réglages");
-  return { application: "AGENDA", format: 1, version: VERSION, exporteLe: new Date().toISOString(), reglages: r.exists() ? r.data() : {}, evenements, annees: an.docs.map((d) => d.id) };
+  return { application: "MONAGENDA", format: 1, version: VERSION, exporteLe: new Date().toISOString(), reglages: r.exists() ? r.data() : {}, evenements, annees: an.docs.map((d) => d.id) };
 }
 function compter(o) {
   const n = o.evenements.length, s = o.evenements.filter((e) => e.data.rr).length, c = ((o.reglages || {}).categories || []).length;
@@ -1290,14 +1290,14 @@ function rendreSauvegarde() {
   const m = nbModifs();
   $("sauv-derniere").textContent = (d ? new Date(d).toLocaleString("fr-FR") : "jamais") + (m ? " — " + pl(m, "modification") + " depuis" : "");
   $("fs-choisir").hidden = !fsDispo();
-  $("fs-aide").textContent = fsDispo() ? "Choisis une fois le dossier (par exemple « AGENDA JSON ») : chaque sauvegarde y sera enregistrée directement. Le navigateur peut redemander l'autorisation : accepte." : "Ce navigateur ne permet pas de choisir un dossier : la sauvegarde va dans « Téléchargements ».";
+  $("fs-aide").textContent = fsDispo() ? "Choisis une fois le dossier (par exemple « MONAGENDA JSON ») : chaque sauvegarde y sera enregistrée directement. Le navigateur peut redemander l'autorisation : accepte." : "Ce navigateur ne permet pas de choisir un dossier : la sauvegarde va dans « Téléchargements ».";
   fsGet().then((h) => { $("fs-nom").textContent = h ? "« " + h.name + " »" : "aucun (le fichier va dans « Téléchargements »)"; $("fs-oublier").hidden = !h; });
 }
 let SAUV_EN_COURS = false;
 async function sauvegarderMaintenant(afficher) {
   if (SAUV_EN_COURS) return; SAUV_EN_COURS = true; $("sauv-go").disabled = true; $("btn-sauv").disabled = true;
   afficher("Sauvegarde en cours…");
-  try { const dos = await preparerDossier(), r = await sauvegarder(dos, "AGENDA_sauvegarde_"); afficher("Sauvegarde enregistrée : " + r.nom + " → " + r.ou + ". " + compter(r.obj) + "."); }
+  try { const dos = await preparerDossier(), r = await sauvegarder(dos, "MONAGENDA_sauvegarde_"); afficher("Sauvegarde enregistrée : " + r.nom + " → " + r.ou + ". " + compter(r.obj) + "."); }
   catch (e) { afficher("Sauvegarde impossible : " + e.message + ".", true); }
   SAUV_EN_COURS = false; $("sauv-go").disabled = false; $("btn-sauv").disabled = false;
   if (VUE === "sauvegarde") rendreSauvegarde();
@@ -1322,7 +1322,7 @@ $("fs-oublier").addEventListener("click", () => { fsSet(null).then(() => { msgSa
 const objet = (x) => !!x && typeof x === "object" && !Array.isArray(x);
 const RE_DATE = /^\d{4}-\d{2}-\d{2}$/, RE_DH = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 function validerSauvegarde(o) {
-  if (!objet(o) || o.application !== "AGENDA" || !Array.isArray(o.evenements)) throw new Error("ce fichier n'est pas un fichier AGENDA");
+  if (!objet(o) || !["MONAGENDA", "AGENDA"].includes(o.application) || !Array.isArray(o.evenements)) throw new Error("ce fichier n'est pas une sauvegarde Monagenda");
   const vus = new Set();
   o.evenements.forEach((x, k) => {
     if (!objet(x) || typeof x.id !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(x.id) || vus.has(x.id) || !objet(x.data)) throw new Error("événement n° " + (k + 1) + " mal formé");
@@ -1353,7 +1353,7 @@ $("rest-oui").addEventListener("click", async () => {
   const btn = $("rest-choisir"); btn.disabled = true;
   try {
     msgSauv("Sauvegarde de l'état actuel…");
-    const avant = await sauvegarder(await preparerDossier(), "AGENDA_avant_restauration_");
+    const avant = await sauvegarder(await preparerDossier(), "MONAGENDA_avant_restauration_");
     msgSauv("Restauration en cours…");
     const parAn = {};
     o.evenements.forEach((x) => { const an = x.data.s.slice(0, 4); (parAn[an] = parAn[an] || {})[x.id] = x.data; });
@@ -1368,7 +1368,7 @@ $("rest-oui").addEventListener("click", async () => {
     MODIFS = 0; majBoutonSauv(); setDoc(refSauv(), { modifs: 0 }, { merge: true }).catch(() => { /* compteur seulement */ });
     msgSauv("Restauration faite : " + compter(o) + ". L'état d'avant est dans " + avant.nom + " (" + avant.ou + ").");
     rendreSauvegarde();
-  } catch (e) { msgSauv("Restauration interrompue : " + e.message + ". Si une partie a été remplacée, restaure le fichier « AGENDA_avant_restauration_… ».", true); }
+  } catch (e) { msgSauv("Restauration interrompue : " + e.message + ". Si une partie a été remplacée, restaure le fichier « MONAGENDA_avant_restauration_… ».", true); }
   btn.disabled = false;
 });
 
